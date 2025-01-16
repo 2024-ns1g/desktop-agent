@@ -48,6 +48,12 @@ fn main() -> eframe::Result {
                 age += 1;
             }
             ui.label(format!("Hello '{name}', age {age}"));
+            ui.with_layout(
+                egui::Layout::top_down_justified(egui::Align::Center),
+                |ui| {
+                    ui.button("I am becoming wider as needed");
+                },
+            );
         });
 
         egui::TopBottomPanel::bottom("footer").show(ctx, |ui| {
