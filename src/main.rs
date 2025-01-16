@@ -13,7 +13,7 @@ fn main() -> eframe::Result {
     // アプリケーションの状態
 
     // Server configuration
-    let mut server_address = "ws://localhost:8080";
+    let mut server_address = "ws://localhost:8080".to_owned();
 
     // Session state
     let mut connect_otp = "".to_owned();
@@ -74,25 +74,22 @@ fn main() -> eframe::Result {
                     },
                 );
             } else {
-                ui.with_layout(
-                    egui::Layout::top_down_justified(egui::Align::Center),
-                    |ui| {
-                        ui.heading("Connect");
-                        egui::Grid::new("some_unique_id")
-                            .num_columns(2)
-                            .show(ui, |ui| {
-                                ui.label("Server Address:");
-                                ui.text_edit_singleline(&mut server_address);
-                                ui.end_row();
-                                ui.label("OTP:");
-                                ui.text_edit_singleline(&mut connect_otp);
-                                ui.end_row();
-                                ui.label("Agent Name:");
-                                ui.text_edit_singleline(&mut agent_name);
-                                ui.end_row();
-                            });
-                    },
-                );
+                ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
+                    ui.heading("Connect");
+                    egui::Grid::new("some_unique_id")
+                        .num_columns(2)
+                        .show(ui, |ui| {
+                            ui.label("Server Address:");
+                            ui.text_edit_singleline(&mut server_address);
+                            ui.end_row();
+                            ui.label("OTP:");
+                            ui.text_edit_singleline(&mut connect_otp);
+                            ui.end_row();
+                            ui.label("Agent Name:");
+                            ui.text_edit_singleline(&mut agent_name);
+                            ui.end_row();
+                        });
+                });
             }
         });
 
