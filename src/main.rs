@@ -11,9 +11,22 @@ fn main() -> eframe::Result {
     };
 
     // アプリケーションの状態
-    let mut name = "Arthur".to_owned();
-    let mut connected = false; // 接続状況のフラグ
-    let mut status_message = "Idle".to_owned(); // 状態メッセージ
+    
+    // Server configuration
+    let mut server_address = "ws://localhost:8080";
+
+    // Session state
+    let mut connect_otp = 0000;
+    let mut connected_session_id = "".to_owned();
+
+    // Agent configuration
+    let mut agent_name = "Agent-001".to_owned();
+
+    // Connection state
+    let mut connected = false;
+
+    // GUI state
+    let mut status_message = "Idle".to_owned();
 
     eframe::run_simple_native("My egui App", options, move |ctx, _frame| {
         egui::TopBottomPanel::top("header").show(ctx, |ui| {
@@ -39,7 +52,6 @@ fn main() -> eframe::Result {
             ui.with_layout(
                 egui::Layout::top_down_justified(egui::Align::Center),
                 |ui| {
-                    ui.text_edit_singleline(&mut name);
                 },
             );
         });
