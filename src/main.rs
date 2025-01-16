@@ -81,16 +81,16 @@ fn main() -> eframe::Result {
                         egui::Grid::new("some_unique_id")
                             .num_columns(2)
                             .show(ui, |ui| {
-                            ui.label("Server Address:");
-                            ui.text_edit_singleline(&mut server_address);
-                            ui.end_row();
-                            ui.label("OTP:");
-                            ui.text_edit_singleline(&mut connect_otp);
-                            ui.end_row();
-                            ui.label("Agent Name:");
-                            ui.text_edit_singleline(&mut agent_name);
-                            ui.end_row();
-                        });
+                                ui.label("Server Address:");
+                                ui.text_edit_singleline(&mut server_address);
+                                ui.end_row();
+                                ui.label("OTP:");
+                                ui.text_edit_singleline(&mut connect_otp);
+                                ui.end_row();
+                                ui.label("Agent Name:");
+                                ui.text_edit_singleline(&mut agent_name);
+                                ui.end_row();
+                            });
                     },
                 );
             }
