@@ -37,28 +37,15 @@ fn main() -> eframe::Result {
         });
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            // ui.heading("Main Content");
-            // ui.horizontal(|ui| {
-            //     let name_label = ui.label("Your name: ");
-            //     ui.text_edit_singleline(&mut name)
-            //         .labelled_by(name_label.id);
-            // });
-            // ui.add(egui::Slider::new(&mut age, 0..=120).text("age"));
-            // if ui.button("Increment").clicked() {
-            //     age += 1;
-            // }
-            // ui.label(format!("Hello '{name}', age {age}"));
             ui.with_layout(
                 egui::Layout::top_down_justified(egui::Align::Center),
                 |ui| {
-                    ui.horizontal(|ui| {
-                        ui.with_layout(
-                            egui::Layout::top_down_justified(egui::Align::Center),
-                            |ui| {
-                                ui.text_edit_singleline(&mut name);
-                            },
-                        );
-                    });
+                    ui.with_layout(
+                        egui::Layout::top_down_justified(egui::Align::Center),
+                        |ui| {
+                            ui.text_edit_singleline(&mut name);
+                        },
+                    );
                 },
             );
         });
