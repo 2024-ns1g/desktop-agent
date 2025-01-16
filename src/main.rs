@@ -65,6 +65,7 @@ fn main() -> eframe::Result {
             // 接続前なら接続, エージェント設定を表示,
             // 接続済みなら中央にその旨を表示してその下にスライドの情報(総枚数, 現在の枚数)を表示
 
+            ui.add_space(12.0);
             if connected {
                 ui.with_layout(
                     egui::Layout::top_down_justified(egui::Align::Center),
@@ -86,6 +87,7 @@ fn main() -> eframe::Result {
                     },
                     |ui| {
                         ui.heading("Connect");
+                        ui.add_space(12.0);
                         egui::Grid::new("some_unique_id")
                             .num_columns(2)
                             .show(ui, |ui| {
@@ -100,17 +102,8 @@ fn main() -> eframe::Result {
                                 ui.end_row();
                             });
 
-                        // if ui.button("Connect").clicked() {
-                        //     connected = true; // TODO: Impl this
-                        //     status_message = "Connected??".to_owned();
-                        // }
-                        //
-                        // Big button
-                        ui.add_space(8.0);
-                        ui.add(
-                            egui::Button::new("Connect")
-                                .min_size(egui::vec2(200.0, 40.0))
-                        );
+                        ui.add_space(12.0);
+                        ui.add(egui::Button::new("Connect").min_size(egui::vec2(100.0, 25.0)));
                     },
                 );
             }
