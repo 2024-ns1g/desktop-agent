@@ -19,6 +19,10 @@ fn main() -> eframe::Result {
     let mut connect_otp = 0000;
     let mut connected_session_id = "".to_owned();
 
+    let mut slide_name = "".to_owned();
+    let mut total_slide_count = 0;
+    let mut current_slide_index = 0;
+
     // Agent configuration
     let mut agent_name = "Agent-001".to_owned();
 
@@ -49,11 +53,13 @@ fn main() -> eframe::Result {
         });
 
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.with_layout(
-                egui::Layout::top_down_justified(egui::Align::Center),
-                |ui| {
-                },
-            );
+            // ui.with_layout(
+            //     egui::Layout::top_down_justified(egui::Align::Center),
+            //     |ui| {
+            //     },
+            // );
+
+            // 接続前なら接続設定を表示, 接続済みなら
         });
 
         egui::TopBottomPanel::bottom("footer").show(ctx, |ui| {
