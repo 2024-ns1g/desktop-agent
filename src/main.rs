@@ -77,21 +77,35 @@ fn main() -> eframe::Result {
                 ui.with_layout(
                     egui::Layout::top_down_justified(egui::Align::Center),
                     |ui| {
-                        egui::Grid::new("some_unique_id").show(ui, |ui| {
-                            ui.label("First row, first column");
-                            ui.label("First row, second column");
+                        ui.heading("Connect");
+                        egui::Grid::new("some_unique_id")
+                            .num_columns(2)
+                            .show(ui, |ui| {
+                            // ui.horizontal(|ui| {
+                            //     ui.label("Server Address:");
+                            //     ui.text_edit_singleline(&mut server_address);
+                            // });
+                            // ui.horizontal(|ui| {
+                            //     ui.label("OTP:");
+                            //     ui.text_edit_singleline(&mut connect_otp);
+                            // });
+                            // ui.horizontal(|ui| {
+                            //     ui.label("Agent Name:");
+                            //     ui.text_edit_singleline(&mut agent_name);
+                            // });
+                            // if ui.button("Connect").clicked() {
+                            //     // 接続時のロジック
+                            //     connected = true;
+                            //     status_message = "Connected".to_owned();
+                            // }
+                            ui.label("Server Address:");
+                            ui.text_edit_singleline(&mut server_address);
                             ui.end_row();
-
-                            ui.label("Second row, first column");
-                            ui.label("Second row, second column");
-                            ui.label("Second row, third column");
+                            ui.label("OTP:");
+                            ui.text_edit_singleline(&mut connect_otp);
                             ui.end_row();
-
-                            ui.horizontal(|ui| {
-                                ui.label("Same");
-                                ui.label("cell");
-                            });
-                            ui.label("Third row, second column");
+                            ui.label("Agent Name:");
+                            ui.text_edit_singleline(&mut agent_name);
                             ui.end_row();
                         });
                     },
