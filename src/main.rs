@@ -19,11 +19,11 @@ fn main() -> eframe::Result {
     eframe::run_simple_native("My egui App", options, move |ctx, _frame| {
         egui::TopBottomPanel::top("header").show(ctx, |ui| {
             egui::Frame::default()
-                .outer_margin(egui::vec2(0.0, 10.0))
+                .outer_margin(egui::vec2(0.0, 4.0))
                 .show(ui, |ui| {
                     ui.horizontal(|ui| {
                         ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
-                            ui.label("My egui App");
+                            ui.heading("My egui App");
                         });
 
                         ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
