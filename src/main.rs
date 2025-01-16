@@ -1,4 +1,7 @@
+use std::any::Any;
+
 use eframe::egui;
+use egui::Widget;
 
 fn main() -> eframe::Result {
     let builder = egui::ViewportBuilder::default()
@@ -74,27 +77,42 @@ fn main() -> eframe::Result {
                     },
                 );
             } else {
-                ui.with_layout(egui::Layout{
-                    main_dir: egui::Direction::TopDown,
-                    main_align: egui::Align::Center,
-                    cross_align: egui::Align::Center,
-                    ..Default::default()
-                }, |ui| {
-                    ui.heading("Connect");
-                    egui::Grid::new("some_unique_id")
-                        .num_columns(2)
-                        .show(ui, |ui| {
-                            ui.label("Server Address:");
-                            ui.text_edit_singleline(&mut server_address);
-                            ui.end_row();
-                            ui.label("OTP:");
-                            ui.text_edit_singleline(&mut connect_otp);
-                            ui.end_row();
-                            ui.label("Agent Name:");
-                            ui.text_edit_singleline(&mut agent_name);
-                            ui.end_row();
-                        });
-                });
+                ui.with_layout(
+                    egui::Layout {
+                        main_dir: egui::Direction::TopDown,
+                        main_align: egui::Align::Center,
+                        cross_align: egui::Align::Center,
+                        ..Default::default()
+                    },
+                    |ui| {
+                        ui.heading("Connect");
+                        egui::Grid::new("some_unique_id")
+                            .num_columns(2)
+                            .show(ui, |ui| {
+                                ui.label("Server Address:");
+                                ui.text_edit_singleline(&mut server_address);
+                                ui.end_row();
+                                ui.label("OTP:");
+                                ui.text_edit_singleline(&mut connect_otp);
+                                ui.end_row();
+                                ui.label("Agent Name:");
+                                ui.text_edit_singleline(&mut agent_name);
+                                ui.end_row();
+                            });
+
+                        // if ui.button("Connect").clicked() {
+                        //     connected = true; // TODO: Impl this
+                        //     status_message = "Connected??".to_owned();
+                        // }
+                        //
+                        // Big button
+                        ui.add_space(8.0);
+                        ui.add(
+                            egui::Button::new("Connect")
+                                .min_size(egui::vec2(200.0, 40.0))
+                        );
+                    },
+                );
             }
         });
 
