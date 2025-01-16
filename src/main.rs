@@ -1,7 +1,4 @@
-use std::any::Any;
-
 use eframe::egui;
-use egui::Widget;
 
 fn main() -> eframe::Result {
     let builder = egui::ViewportBuilder::default()
