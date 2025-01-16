@@ -40,12 +40,7 @@ fn main() -> eframe::Result {
             ui.with_layout(
                 egui::Layout::top_down_justified(egui::Align::Center),
                 |ui| {
-                    ui.with_layout(
-                        egui::Layout::top_down_justified(egui::Align::Center),
-                        |ui| {
-                            ui.text_edit_singleline(&mut name);
-                        },
-                    );
+                    ui.text_edit_singleline(&mut name);
                 },
             );
         });
