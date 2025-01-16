@@ -52,45 +52,60 @@ fn main() -> eframe::Result {
                 });
         });
 
+        // egui::CentralPanel::default().show(ctx, |ui| {
+        //     // ui.with_layout(
+        //     //     egui::Layout::top_down_justified(egui::Align::Center),
+        //     //     |ui| {
+        //     //     },
+        //     // );
+        //
+        //     // 接続前なら接続, エージェント設定を表示,
+        //     // 接続済みなら中央にその旨を表示してその下にスライドの情報(総枚数, 現在の枚数)を表示
+        //
+        //     if connected {
+        //         ui.with_layout(
+        //             egui::Layout::top_down_justified(egui::Align::Center),
+        //             |ui| {
+        //                 ui.heading("Connected");
+        //                 ui.label(format!(
+        //                     "Slide: {}/{}",
+        //                     current_slide_index, total_slide_count
+        //                 ));
+        //             },
+        //         );
+        //     } else {
+        //         ui.with_layout(egui::Layout{
+        //             main_dir: egui::Direction::TopDown,
+        //             main_align: egui::Align::Center,
+        //             cross_align: egui::Align::Center,
+        //             ..Default::default()
+        //         }, |ui| {
+        //             ui.heading("Connect");
+        //             egui::Grid::new("some_unique_id")
+        //                 .num_columns(2)
+        //                 .show(ui, |ui| {
+        //                     ui.label("Server Address:");
+        //                     ui.text_edit_singleline(&mut server_address);
+        //                     ui.end_row();
+        //                     ui.label("OTP:");
+        //                     ui.text_edit_singleline(&mut connect_otp);
+        //                     ui.end_row();
+        //                     ui.label("Agent Name:");
+        //                     ui.text_edit_singleline(&mut agent_name);
+        //                     ui.end_row();
+        //                 });
+        //         });
+        //     }
+        // });
+
         egui::CentralPanel::default().show(ctx, |ui| {
-            // ui.with_layout(
-            //     egui::Layout::top_down_justified(egui::Align::Center),
-            //     |ui| {
-            //     },
-            // );
-
-            // 接続前なら接続, エージェント設定を表示,
-            // 接続済みなら中央にその旨を表示してその下にスライドの情報(総枚数, 現在の枚数)を表示
-
-            if connected {
-                ui.with_layout(
-                    egui::Layout::top_down_justified(egui::Align::Center),
-                    |ui| {
-                        ui.heading("Connected");
-                        ui.label(format!(
-                            "Slide: {}/{}",
-                            current_slide_index, total_slide_count
-                        ));
-                    },
-                );
-            } else {
-                ui.with_layout(egui::Layout::top_down(egui::Align::Center), |ui| {
-                    ui.heading("Connect");
-                    egui::Grid::new("some_unique_id")
-                        .num_columns(2)
-                        .show(ui, |ui| {
-                            ui.label("Server Address:");
-                            ui.text_edit_singleline(&mut server_address);
-                            ui.end_row();
-                            ui.label("OTP:");
-                            ui.text_edit_singleline(&mut connect_otp);
-                            ui.end_row();
-                            ui.label("Agent Name:");
-                            ui.text_edit_singleline(&mut agent_name);
-                            ui.end_row();
-                        });
+            egui::Frame::none()
+                .fill(egui::Color32::TRANSPARENT)
+                .show(ui, |ui| {
+                    ui.vertical_centered(|ui| {
+                        ui.heading("Centered in the Panel");
+                    });
                 });
-            }
         });
 
         egui::TopBottomPanel::bottom("footer").show(ctx, |ui| {
