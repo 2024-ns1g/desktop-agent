@@ -17,7 +17,6 @@ fn main() -> eframe::Result {
     let mut status_message = "Idle".to_owned(); // 状態メッセージ
 
     eframe::run_simple_native("My egui App", options, move |ctx, _frame| {
-        // ヘッダー
         egui::TopBottomPanel::top("header").show(ctx, |ui| {
             ui.horizontal(|ui| {
                 ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
@@ -33,7 +32,6 @@ fn main() -> eframe::Result {
             });
         });
 
-        // メインコンテンツ
         egui::CentralPanel::default().show(ctx, |ui| {
             ui.heading("Main Content");
             ui.horizontal(|ui| {
@@ -48,7 +46,6 @@ fn main() -> eframe::Result {
             ui.label(format!("Hello '{name}', age {age}"));
         });
 
-        // フッター
         egui::TopBottomPanel::bottom("footer").show(ctx, |ui| {
             ui.horizontal(|ui| {
                 // 左端に接続状況を表示 (幅が足りない場合は '...' にする)
