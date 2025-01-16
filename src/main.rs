@@ -12,7 +12,6 @@ fn main() -> eframe::Result {
 
     // アプリケーションの状態
     let mut name = "Arthur".to_owned();
-    let mut age = 42;
     let mut connected = false; // 接続状況のフラグ
     let mut status_message = "Idle".to_owned(); // 状態メッセージ
 
