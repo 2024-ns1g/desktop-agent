@@ -81,23 +81,6 @@ fn main() -> eframe::Result {
                         egui::Grid::new("some_unique_id")
                             .num_columns(2)
                             .show(ui, |ui| {
-                            // ui.horizontal(|ui| {
-                            //     ui.label("Server Address:");
-                            //     ui.text_edit_singleline(&mut server_address);
-                            // });
-                            // ui.horizontal(|ui| {
-                            //     ui.label("OTP:");
-                            //     ui.text_edit_singleline(&mut connect_otp);
-                            // });
-                            // ui.horizontal(|ui| {
-                            //     ui.label("Agent Name:");
-                            //     ui.text_edit_singleline(&mut agent_name);
-                            // });
-                            // if ui.button("Connect").clicked() {
-                            //     // 接続時のロジック
-                            //     connected = true;
-                            //     status_message = "Connected".to_owned();
-                            // }
                             ui.label("Server Address:");
                             ui.text_edit_singleline(&mut server_address);
                             ui.end_row();
