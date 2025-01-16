@@ -11,12 +11,12 @@ fn main() -> eframe::Result {
     };
 
     // アプリケーションの状態
-    
+
     // Server configuration
     let mut server_address = "ws://localhost:8080";
 
     // Session state
-    let mut connect_otp = 0000;
+    let mut connect_otp = "".to_owned();
     let mut connected_session_id = "".to_owned();
 
     let mut slide_name = "".to_owned();
@@ -59,7 +59,45 @@ fn main() -> eframe::Result {
             //     },
             // );
 
-            // 接続前なら接続設定を表示, 接続済みなら
+            // 接続前なら接続, エージェント設定を表示,
+            // 接続済みなら中央にその旨を表示してその下にスライドの情報(総枚数, 現在の枚数)を表示
+
+            if connected {
+                ui.with_layout(
+                    egui::Layout::top_down_justified(egui::Align::Center),
+                    |ui| {
+                        ui.heading("Connected");
+                        ui.label(format!(
+                            "Slide: {}/{}",
+                            current_slide_index, total_slide_count
+                        ));
+                    },
+                );
+            } else {
+                ui.with_layout(
+                    egui::Layout::top_down_justified(egui::Align::Center),
+                    |ui| {
+                        ui.heading("Connect");
+                        ui.horizontal(|ui| {
+                            ui.label("Server Address:");
+                            ui.text_edit_singleline(&mut server_address);
+                        });
+                        ui.horizontal(|ui| {
+                            ui.label("OTP:");
+                            ui.text_edit_singleline(&mut connect_otp);
+                        });
+                        ui.horizontal(|ui| {
+                            ui.label("Agent Name:");
+                            ui.text_edit_singleline(&mut agent_name);
+                        });
+                        if ui.button("Connect").clicked() {
+                            // 接続時のロジック
+                            connected = true;
+                            status_message = "Connected".to_owned();
+                        }
+                    },
+                );
+            }
         });
 
         egui::TopBottomPanel::bottom("footer").show(ctx, |ui| {
