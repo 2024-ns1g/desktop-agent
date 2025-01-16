@@ -20,11 +20,16 @@ fn main() -> eframe::Result {
         // ヘッダー
         egui::TopBottomPanel::top("header").show(ctx, |ui| {
             ui.horizontal(|ui| {
-                ui.heading("My egui Application"); // タイトル
-                if ui.button("Disconnect").clicked() {
-                    connected = false; // 切断のロジック
-                    status_message = "Disconnected".to_owned();
-                }
+                ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+                    ui.label("My egui App");
+                });
+
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    if ui.button("Disconnect").clicked() {
+                        connected = false; // 切断時のロジック
+                        status_message = "Disconnected".to_owned();
+                    }
+                });
             });
         });
 
@@ -46,9 +51,22 @@ fn main() -> eframe::Result {
         // フッター
         egui::TopBottomPanel::bottom("footer").show(ctx, |ui| {
             ui.horizontal(|ui| {
-                let connection_status = if connected { "Connected" } else { "Not Connected" };
-                ui.label(format!("Status: {connection_status}"));
-                ui.label(format!("Message: {status_message}"));
+                // 左端に接続状況を表示 (幅が足りない場合は '...' にする)
+                ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+                    ui.label(format!(
+                        "Status: {}",
+                        if connected {
+                            "Connected"
+                        } else {
+                            "Not Connected"
+                        }
+                    ));
+                });
+
+                // 右端に状態メッセージを表示
+                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                    ui.label(format!("Message: {status_message}"));
+                });
             });
         });
     })
