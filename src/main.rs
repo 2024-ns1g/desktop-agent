@@ -115,34 +115,7 @@ fn main() -> eframe::Result {
 }
 
 fn ui_main(ctx: &egui::Context) {
-    {
-        let mut state = APP_STATE.lock().unwrap();
-
-        // 受信チャンネルが存在する場合、イベントを処理
-        if let Some(receiver) = &state.event_receiver {
-            while let Ok(event) = receiver.try_recv() {
-                match event {
-                    Event::KeyPress { key } => match key.as_str() {
-                        "ArrowRight" => {
-                            if state.current_slide_index < state.total_slide_count {
-                                state.current_slide_index += 1;
-                                state.status_message = "次のスライドに移動しました。".to_owned();
-                            }
-                        }
-                        "ArrowLeft" => {
-                            if state.current_slide_index > 0 {
-                                state.current_slide_index -= 1;
-                                state.status_message = "前のスライドに戻りました。".to_owned();
-                            }
-                        }
-                        _ => {
-                            state.status_message = format!("未対応のキー押下: {}", key);
-                        }
-                    },
-                }
-            }
-        }
-    }
+    let mut state = APP_STATE.lock().unwrap();
 
     egui::TopBottomPanel::top("header").show(ctx, |ui| {
         egui::Frame::default()
