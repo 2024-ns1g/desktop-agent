@@ -18,7 +18,7 @@ pub async fn verify_otp(
     base_url: &str,
     otp: &str,
 ) -> Result<VerifyOtpResponse, anyhow::Error> {
-    let url = format!("{}/api/session/verify", base_url);
+    let url = format!("{}/session/agent/verify", base_url);
     let request = VerifyOtpRequest {
         otp: otp.to_string(),
     };
