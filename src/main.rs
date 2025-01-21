@@ -1,4 +1,4 @@
-use connection::verify_otp;
+use connection::{establish_ws_connection, verify_otp};
 use eframe::egui;
 use once_cell::sync::Lazy;
 use std::sync::Mutex;
@@ -30,7 +30,7 @@ struct AppState {
 }
 
 impl AppState {
-    pub fn connect(&mut self) {
+    pub fn solve_otp(&mut self) {
         let client = reqwest::Client::new();
         let base_url = self.primary_server_address.clone();
         let otp = self.otp.clone();
@@ -49,6 +49,32 @@ impl AppState {
                 }
                 Err(e) => {
                     state.status_message = format!("Connection failed: {}", e);
+                }
+            }
+        });
+    }
+
+    pub fn establish_ws_connection(&mut self) {
+        let session_id = self.session_id.clone();
+        let token = self.token.clone();
+        let agent_name = self.agent_name.clone();
+        let session_server_address = self.session_server_address.clone();
+
+        std::thread::spawn(move || {
+            let rt = tokio::runtime::Runtime::new().unwrap();
+            let result = rt.block_on(establish_ws_connection(
+                &session_server_address,
+                &session_id,
+                &token,
+                &agent_name,
+            ));
+            let mut state = APP_STATE.lock().unwrap();
+            match result {
+                Ok(()) => {
+                    state.status_message = "WS connection established".to_owned();
+                }
+                Err(e) => {
+                    state.status_message = format!("Failed to establish WS connection: {}", e);
                 }
             }
         });
@@ -155,7 +181,7 @@ fn ui_main(ctx: &egui::Context) {
 
                     ui.add_space(12.0);
                     if ui.button("Connect").clicked() {
-                        state.connect();
+                        state.solve_otp();
                     }
                 },
             );
