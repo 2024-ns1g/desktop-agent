@@ -88,13 +88,9 @@ impl AppState {
 
 static APP_STATE: Lazy<Mutex<AppState>> = Lazy::new(|| Mutex::new(AppState::default()));
 
-// ----------------------
-// 3) main関数
-// ----------------------
 fn main() -> eframe::Result {
     env_logger::init();
 
-    // Specify window size via ViewportBuilder
     let builder = egui::ViewportBuilder::default()
         .with_title("My egui App")
         .with_inner_size(egui::vec2(400.0, 300.0));
@@ -111,9 +107,6 @@ fn main() -> eframe::Result {
     })
 }
 
-// ----------------------
-// 4) UIを描画するための関数
-// ----------------------
 fn ui_main(ctx: &egui::Context) {
     // Acquire the lock to access the app state
     let mut state = APP_STATE.lock().unwrap();
