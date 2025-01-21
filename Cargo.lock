@@ -877,6 +877,7 @@ dependencies = [
  "enigo",
  "env_logger",
  "futures-util",
+ "log",
  "once_cell",
  "reqwest",
  "serde",
