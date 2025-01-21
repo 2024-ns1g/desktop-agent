@@ -5,7 +5,9 @@ use std::sync::Mutex;
 #[derive(Default)]
 struct AppState {
     // ユーザが入力するパラメータ
-    server_address: String,
+    primary_server_address: String,
+    session_server_address: String,
+    
     otp: String,
     agent_name: String,
 
@@ -105,8 +107,12 @@ fn ui_main(ctx: &egui::Context) {
                     egui::Grid::new("some_unique_id")
                         .num_columns(2)
                         .show(ui, |ui| {
-                            ui.label("Server Address:");
-                            ui.text_edit_singleline(&mut state.server_address);
+                            ui.label("Address(Primary):");
+                            ui.text_edit_singleline(&mut state.primary_server_address);
+                            ui.end_row();
+
+                            ui.label("Address(Session):");
+                            ui.text_edit_singleline(&mut state.session_server_address);
                             ui.end_row();
 
                             ui.label("OTP:");
