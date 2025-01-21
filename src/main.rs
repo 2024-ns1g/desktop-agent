@@ -178,7 +178,7 @@ fn ui_main(ctx: &egui::Context) {
 
                     ui.add_space(12.0);
                     if ui.button("Connect").clicked() {
-                        state.solve_otp();
+                        // state.solve_otp();
                         state.establish_ws_connection();
                     }
                 },
