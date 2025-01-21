@@ -87,8 +87,7 @@ fn ui_main(ctx: &egui::Context) {
                     ui.heading("Connected");
                     ui.label(format!(
                         "Slide: {}/{}",
-                        state.current_slide_index,
-                        state.total_slide_count
+                        state.current_slide_index, state.total_slide_count
                     ));
                 },
             );
@@ -120,7 +119,11 @@ fn ui_main(ctx: &egui::Context) {
                         });
 
                     ui.add_space(12.0);
-                    if ui.button("Connect").min_size(egui::vec2(100.0, 25.0)).clicked() {
+                    if ui
+                        .button("Connect")
+                        // .min_size(egui::vec2(100.0, 25.0))
+                        .clicked()
+                    {
                         // ここで実際の接続処理を呼び出す
                         // ex) start_connection(state.server_address.clone(), state.connect_otp.clone(), state.agent_name.clone());
                         // など
