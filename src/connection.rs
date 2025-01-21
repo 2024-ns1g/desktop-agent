@@ -1,7 +1,8 @@
-use enigo::{Key, Settings, Keyboard, Direction::Click};
+use enigo::{Direction::Click, Key, Keyboard, Settings};
+use futures_util::{SinkExt, StreamExt};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use tokio;
+use tokio_tungstenite::tungstenite;
 
 #[derive(Serialize)]
 pub struct VerifyOtpRequest {
@@ -70,4 +71,34 @@ async fn handle_event(event: Event) {
             });
         }
     }
+}
+
+pub async fn establish_ws_connection(
+    base_url: &str,
+    session_id: &str,
+    token: &str,
+    agent_name: &str,
+) -> Result<(), anyhow::Error> {
+    let (ws_stream, _) = tokio_tungstenite::connect_async(format!(
+        "{}/agent/ws?session_id={}",
+        base_url, session_id
+    ))
+    .await?;
+    let (mut write, read) = ws_stream.split();
+    let register_message = RegisterAgentMessage {
+        msg_type: "REGISTER_AGENT",
+        agent_name,
+        agent_type: "DESKTOP",
+        token,
+    };
+    let register_message = serde_json::to_string(&register_message).unwrap();
+    write
+        .send(tungstenite::Message::text(register_message))
+        .await?;
+    tokio::task::spawn(read.for_each(|msg| async {
+        let msg = msg.unwrap();
+        let event: Event = serde_json::from_str(&msg.to_string()).unwrap();
+        handle_event(event).await;
+    }));
+    Ok(())
 }
