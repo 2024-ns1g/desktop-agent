@@ -1,3 +1,4 @@
+use connection::verify_otp;
 use eframe::egui;
 use once_cell::sync::Lazy;
 use std::sync::Mutex;
@@ -9,7 +10,7 @@ struct AppState {
     // ユーザが入力するパラメータ
     primary_server_address: String,
     session_server_address: String,
-    
+
     otp: String,
     agent_name: String,
 
@@ -26,6 +27,32 @@ struct AppState {
     // スライドの情報
     current_slide_index: usize,
     total_slide_count: usize,
+}
+
+impl AppState {
+    pub fn connect(&mut self) {
+        let client = reqwest::Client::new();
+        let base_url = self.session_server_address.clone();
+        let otp = self.otp.clone();
+
+        std::thread::spawn(move || {
+            let rt = tokio::runtime::Runtime::new().unwrap();
+            let result = rt.block_on(verify_otp(&client, &base_url, &otp));
+            let mut state = APP_STATE.lock().unwrap();
+
+            match result {
+                Ok(response) => {
+                    state.session_id = response.session_id;
+                    state.token = response.token;
+                    state.connected = true;
+                    state.status_message = "Connected successfully!".to_owned();
+                }
+                Err(e) => {
+                    state.status_message = format!("Connection failed: {}", e);
+                }
+            }
+        });
+    }
 }
 
 static APP_STATE: Lazy<Mutex<AppState>> = Lazy::new(|| Mutex::new(AppState::default()));
@@ -127,14 +154,8 @@ fn ui_main(ctx: &egui::Context) {
                         });
 
                     ui.add_space(12.0);
-                    if ui
-                        .button("Connect")
-                        // .min_size(egui::vec2(100.0, 25.0))
-                        .clicked()
-                    {
-                        // ここで実際の接続処理を呼び出す
-                        // ex) start_connection(state.server_address.clone(), state.connect_otp.clone(), state.agent_name.clone());
-                        // など
+                    if ui.button("Connect").clicked() {
+                        state.connect();
                     }
                 },
             );
