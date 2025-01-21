@@ -80,7 +80,7 @@ pub async fn establish_ws_connection(
     agent_name: &str,
 ) -> Result<(), anyhow::Error> {
     let (ws_stream, _) = tokio_tungstenite::connect_async(format!(
-        "{}/agent?session_id={}",
+        "{}/agent?sessionId={}",
         base_url, session_id
     ))
     .await?;
