@@ -7,47 +7,55 @@ mod connection;
 
 #[derive(Default)]
 struct AppState {
-    // ユーザが入力するパラメータ
+    // User-input parameters
     primary_server_address: String,
     session_server_address: String,
 
     otp: String,
     agent_name: String,
 
-    // 取得した値
+    // Retrieved values
     session_id: String,
     token: String,
 
-    // 接続状態フラグ
+    // Connection status flag
     connected: bool,
 
-    // 何かメッセージをUIに表示したいとき
+    // Status message to display in the UI
     status_message: String,
 
-    // スライドの情報
+    // Slide information
     current_slide_index: usize,
     total_slide_count: usize,
 }
 
 impl AppState {
-    pub fn solve_otp(&mut self) {
+    pub fn connect_to_session(&mut self) {
         let client = reqwest::Client::new();
         let base_url = self.primary_server_address.clone();
         let otp = self.otp.clone();
-        let rt = tokio::runtime::Runtime::new().unwrap();
-        let result = rt.block_on(verify_otp(&client, &base_url, &otp));
-        let mut state = APP_STATE.lock().unwrap();
 
-        match result {
-            Ok(response) => {
-                state.session_id = response.session_id;
-                state.token = response.token;
-                state.status_message = "Otp verified".to_owned();
+        std::thread::spawn(move || {
+            let rt = tokio::runtime::Runtime::new().unwrap();
+            let result = rt.block_on(verify_otp(&client, &base_url, &otp));
+
+            match result {
+                Ok(response) => {
+                    {
+                        let mut state = APP_STATE.lock().unwrap();
+                        state.session_id = response.session_id;
+                        state.token = response.token;
+                        state.status_message = "OTP verified successfully.".to_owned();
+                    }
+                    // Establish WebSocket connection after successful OTP verification
+                    APP_STATE.lock().unwrap().establish_ws_connection();
+                }
+                Err(e) => {
+                    let mut state = APP_STATE.lock().unwrap();
+                    state.status_message = format!("OTP Verification Failed: {}", e);
+                }
             }
-            Err(e) => {
-                state.status_message = format!("Connection failed: {}", e);
-            }
-        }
+        });
     }
 
     pub fn establish_ws_connection(&mut self) {
@@ -68,10 +76,10 @@ impl AppState {
             match result {
                 Ok(()) => {
                     state.connected = true;
-                    state.status_message = "WS connection established".to_owned();
+                    state.status_message = "WebSocket connection established.".to_owned();
                 }
                 Err(e) => {
-                    state.status_message = format!("Failed to establish WS connection: {}", e);
+                    state.status_message = format!("Failed to establish WebSocket connection: {}", e);
                 }
             }
         });
@@ -84,7 +92,9 @@ static APP_STATE: Lazy<Mutex<AppState>> = Lazy::new(|| Mutex::new(AppState::defa
 // 3) main関数
 // ----------------------
 fn main() -> eframe::Result {
-    // 今のバージョンのeframeでは、ウィンドウサイズを「ViewportBuilder」経由で指定する必要がある
+    env_logger::init();
+
+    // Specify window size via ViewportBuilder
     let builder = egui::ViewportBuilder::default()
         .with_title("My egui App")
         .with_inner_size(egui::vec2(400.0, 300.0));
@@ -94,9 +104,9 @@ fn main() -> eframe::Result {
         ..Default::default()
     };
 
-    // eframe::run_simple_native(...) でウィンドウ起動 & UIループ開始
+    // Launch the window and start the UI loop
     eframe::run_simple_native("My egui App", options, move |ctx, _frame| {
-        // ここで毎フレーム ui_main(ctx) を呼び出す形に分割
+        // Call ui_main(ctx) every frame
         ui_main(ctx);
     })
 }
@@ -105,7 +115,7 @@ fn main() -> eframe::Result {
 // 4) UIを描画するための関数
 // ----------------------
 fn ui_main(ctx: &egui::Context) {
-    // まずはロックを取ってアプリの状態を取り出す
+    // Acquire the lock to access the app state
     let mut state = APP_STATE.lock().unwrap();
 
     egui::TopBottomPanel::top("header").show(ctx, |ui| {
@@ -113,15 +123,15 @@ fn ui_main(ctx: &egui::Context) {
             .outer_margin(egui::vec2(0.0, 4.0))
             .show(ui, |ui| {
                 ui.horizontal(|ui| {
-                    // 左側
+                    // Left side
                     ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
                         ui.heading("My egui App");
                     });
 
-                    // 右側
+                    // Right side
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         if ui.button("Disconnect").clicked() {
-                            // 切断処理(例)
+                            // Disconnect logic (example)
                             state.connected = false;
                             state.status_message = "Disconnected".to_owned();
                         }
@@ -133,7 +143,7 @@ fn ui_main(ctx: &egui::Context) {
     egui::CentralPanel::default().show(ctx, |ui| {
         ui.add_space(8.0);
 
-        // 接続済みかどうかでUIを分岐
+        // Branch the UI based on connection status
         if state.connected {
             ui.with_layout(
                 egui::Layout::top_down_justified(egui::Align::Center),
@@ -156,14 +166,14 @@ fn ui_main(ctx: &egui::Context) {
                 |ui| {
                     ui.heading("Connect");
                     ui.add_space(12.0);
-                    egui::Grid::new("some_unique_id")
+                    egui::Grid::new("connect_grid")
                         .num_columns(2)
                         .show(ui, |ui| {
-                            ui.label("Address(Primary):");
+                            ui.label("Address (Primary):");
                             ui.text_edit_singleline(&mut state.primary_server_address);
                             ui.end_row();
 
-                            ui.label("Address(Session):");
+                            ui.label("Address (Session):");
                             ui.text_edit_singleline(&mut state.session_server_address);
                             ui.end_row();
 
@@ -178,8 +188,8 @@ fn ui_main(ctx: &egui::Context) {
 
                     ui.add_space(12.0);
                     if ui.button("Connect").clicked() {
-                        // state.solve_otp();
-                        state.establish_ws_connection();
+                        state.connect_to_session();
+                        // Removed: state.establish_ws_connection();
                     }
                 },
             );
@@ -188,7 +198,7 @@ fn ui_main(ctx: &egui::Context) {
 
     egui::TopBottomPanel::bottom("footer").show(ctx, |ui| {
         ui.horizontal(|ui| {
-            // 左端に接続状況を表示
+            // Display connection status on the left
             ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
                 ui.label(format!(
                     "Status: {}",
@@ -200,7 +210,7 @@ fn ui_main(ctx: &egui::Context) {
                 ));
             });
 
-            // 右端に状態メッセージを表示
+            // Display status message on the right
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 ui.label(format!("Message: {}", state.status_message));
             });
