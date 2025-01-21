@@ -1,4 +1,4 @@
-use reqwest::Client;
+use reqwest::{Client, Error};
 use serde::{Deserialize, Serialize};
 use tokio;
 
@@ -25,7 +25,10 @@ async fn verify_otp(
 
     let resp = client.post(&url).json(&request).send().await?;
 
-    if !resp.status().is_success() {
-        return Err(reqwest::Error::new(reqwest::Error::Kind::Status, resp));
+    if resp.status().is_success() {
+        let resp = resp.json::<VerifyOtpResponse>().await?;
+        Ok(resp)
+    } else {
+        return Err(std::error
     }
 }
