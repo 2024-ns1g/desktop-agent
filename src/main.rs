@@ -2,6 +2,8 @@ use eframe::egui;
 use once_cell::sync::Lazy;
 use std::sync::Mutex;
 
+mod connection;
+
 #[derive(Default)]
 struct AppState {
     // ユーザが入力するパラメータ
