@@ -32,7 +32,7 @@ struct AppState {
 impl AppState {
     pub fn connect(&mut self) {
         let client = reqwest::Client::new();
-        let base_url = self.session_server_address.clone();
+        let base_url = self.primary_server_address.clone();
         let otp = self.otp.clone();
 
         std::thread::spawn(move || {
