@@ -1,23 +1,23 @@
-use reqwest::{Client, Error};
+use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use tokio;
 
 #[derive(Serialize)]
-struct VerifyOtpRequest {
-    otp: String,
+pub struct VerifyOtpRequest {
+    pub otp: String,
 }
 
 #[derive(Deserialize)]
-struct VerifyOtpResponse {
-    session_id: String,
-    token: String,
+pub struct VerifyOtpResponse {
+    pub session_id: String,
+    pub token: String,
 }
 
-async fn verify_otp(
+pub async fn verify_otp(
     client: &Client,
     base_url: &str,
     otp: &str,
-) -> Result<VerifyOtpResponse, reqwest::Error> {
+) -> Result<VerifyOtpResponse, anyhow::Error> {
     let url = format!("{}/api/session/verify", base_url);
     let request = VerifyOtpRequest {
         otp: otp.to_string(),
@@ -26,9 +26,9 @@ async fn verify_otp(
     let resp = client.post(&url).json(&request).send().await?;
 
     if resp.status().is_success() {
-        let resp = resp.json::<VerifyOtpResponse>().await?;
-        Ok(resp)
+        let response = resp.json::<VerifyOtpResponse>().await?;
+        Ok(response)
     } else {
-        return Err(std::error
+        Err(anyhow::anyhow!("Failed to verify OTP"))
     }
 }
