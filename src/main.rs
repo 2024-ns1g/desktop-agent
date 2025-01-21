@@ -34,23 +34,20 @@ impl AppState {
         let client = reqwest::Client::new();
         let base_url = self.primary_server_address.clone();
         let otp = self.otp.clone();
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let result = rt.block_on(verify_otp(&client, &base_url, &otp));
+        let mut state = APP_STATE.lock().unwrap();
 
-        std::thread::spawn(move || {
-            let rt = tokio::runtime::Runtime::new().unwrap();
-            let result = rt.block_on(verify_otp(&client, &base_url, &otp));
-            let mut state = APP_STATE.lock().unwrap();
-
-            match result {
-                Ok(response) => {
-                    state.session_id = response.session_id;
-                    state.token = response.token;
-                    state.status_message = "Otp verified".to_owned();
-                }
-                Err(e) => {
-                    state.status_message = format!("Connection failed: {}", e);
-                }
+        match result {
+            Ok(response) => {
+                state.session_id = response.session_id;
+                state.token = response.token;
+                state.status_message = "Otp verified".to_owned();
             }
-        });
+            Err(e) => {
+                state.status_message = format!("Connection failed: {}", e);
+            }
+        }
     }
 
     pub fn establish_ws_connection(&mut self) {
@@ -182,7 +179,7 @@ fn ui_main(ctx: &egui::Context) {
                     ui.add_space(12.0);
                     if ui.button("Connect").clicked() {
                         state.solve_otp();
-                        
+                        state.establish_ws_connection();
                     }
                 },
             );
