@@ -5,13 +5,14 @@ use serde::{Deserialize, Serialize};
 use tokio_tungstenite::tungstenite;
 use log::{debug, info, error};
 
-#[derive(Serialize)]
+#[derive(Serialize, Debug)]
 pub struct VerifyOtpRequest {
     pub otp: String,
 }
 
 #[derive(Deserialize, Debug)]
 pub struct VerifyOtpResponse {
+    #[serde(rename = "sessionId")]
     pub session_id: String,
     pub token: String,
 }
@@ -21,11 +22,12 @@ pub async fn verify_otp(
     base_url: &str,
     otp: &str,
 ) -> Result<VerifyOtpResponse, anyhow::Error> {
+    debug!("Verifying OTP: {}", otp);
     let url = format!("{}/session/agent/verify", base_url);
     let request = VerifyOtpRequest {
         otp: otp.to_string(),
     };
-
+    debug!("Request: {:?}", request);
     let resp = client.post(&url).json(&request).send().await?;
 
     if resp.status().is_success() {
