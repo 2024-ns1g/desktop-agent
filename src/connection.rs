@@ -3,6 +3,7 @@ use futures_util::{SinkExt, StreamExt};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use tokio_tungstenite::tungstenite;
+use log::{debug, info, error, warn};
 
 #[derive(Serialize)]
 pub struct VerifyOtpRequest {
