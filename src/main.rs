@@ -44,8 +44,7 @@ impl AppState {
                 Ok(response) => {
                     state.session_id = response.session_id;
                     state.token = response.token;
-                    state.connected = true;
-                    state.status_message = "Connected successfully!".to_owned();
+                    state.status_message = "Otp verified".to_owned();
                 }
                 Err(e) => {
                     state.status_message = format!("Connection failed: {}", e);
@@ -71,6 +70,7 @@ impl AppState {
             let mut state = APP_STATE.lock().unwrap();
             match result {
                 Ok(()) => {
+                    state.connected = true;
                     state.status_message = "WS connection established".to_owned();
                 }
                 Err(e) => {
@@ -182,6 +182,7 @@ fn ui_main(ctx: &egui::Context) {
                     ui.add_space(12.0);
                     if ui.button("Connect").clicked() {
                         state.solve_otp();
+                        
                     }
                 },
             );
