@@ -3,14 +3,14 @@ use futures_util::{SinkExt, StreamExt};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use tokio_tungstenite::tungstenite;
-use log::{debug, info, error, warn};
+use log::{debug, info, error};
 
 #[derive(Serialize)]
 pub struct VerifyOtpRequest {
     pub otp: String,
 }
 
-#[derive(Deserialize)]
+#[derive(Deserialize, Debug)]
 pub struct VerifyOtpResponse {
     pub session_id: String,
     pub token: String,
@@ -30,8 +30,10 @@ pub async fn verify_otp(
 
     if resp.status().is_success() {
         let response = resp.json::<VerifyOtpResponse>().await?;
+        info!("OTP verified successfully: {:?}", response);
         Ok(response)
     } else {
+        error!("Failed to verify OTP: {:?}", resp);
         Err(anyhow::anyhow!("Failed to verify OTP"))
     }
 }
@@ -60,12 +62,16 @@ async fn handle_event(event: Event) {
             tokio::task::spawn_blocking(move || {
                 let mut enigo = enigo::Enigo::new(&Settings::default()).unwrap();
 
+                debug!("Key event: {}", key);
+
                 match key.as_str() {
                     "ArrowRight" => {
                         enigo.key(Key::RightArrow, Click).unwrap();
+                        info!("Right arrow key pressed");
                     }
                     "ArrowLeft" => {
                         enigo.key(Key::LeftArrow, Click).unwrap();
+                        info!("Left arrow key pressed");
                     }
                     _ => {}
                 }
@@ -80,11 +86,13 @@ pub async fn establish_ws_connection(
     token: &str,
     agent_name: &str,
 ) -> Result<(), anyhow::Error> {
+    debug!("Establishing WebSocket connection to {}", base_url);
     let (ws_stream, _) = tokio_tungstenite::connect_async(format!(
         "{}/agent?sessionId={}",
         base_url, session_id
     ))
     .await?;
+    info!("WebSocket connection established");
     let (mut write, read) = ws_stream.split();
     let register_message = RegisterAgentMessage {
         msg_type: "REGISTER_AGENT",
@@ -93,6 +101,7 @@ pub async fn establish_ws_connection(
         token,
     };
     let register_message = serde_json::to_string(&register_message).unwrap();
+    debug!("Sending register message: {}", register_message);
     write
         .send(tungstenite::Message::text(register_message))
         .await?;
