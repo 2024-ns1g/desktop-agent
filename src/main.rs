@@ -1,6 +1,32 @@
 use eframe::egui;
+use once_cell::sync::Lazy;
+use std::sync::Mutex;
 
+#[derive(Default)]
+struct AppState {
+    // ユーザが入力するパラメータ
+    server_address: String,
+    otp: String,
+    agent_name: String,
+
+    // 取得した値
+    session_id: String,
+    token: String,
+
+    // 接続状態フラグ
+    connected: bool,
+
+    // 何かメッセージをUIに表示したいとき
+    status_message: String,
+}
+
+static APP_STATE: Lazy<Mutex<AppState>> = Lazy::new(|| Mutex::new(AppState::default()));
+
+// ----------------------
+// 3) main関数
+// ----------------------
 fn main() -> eframe::Result {
+    // 今のバージョンのeframeでは、ウィンドウサイズを「ViewportBuilder」経由で指定する必要がある
     let builder = egui::ViewportBuilder::default()
         .with_title("My egui App")
         .with_inner_size(egui::vec2(400.0, 300.0));
@@ -10,112 +36,114 @@ fn main() -> eframe::Result {
         ..Default::default()
     };
 
-    // アプリケーションの状態
-
-    // Server configuration
-    let mut server_address = "ws://localhost:8080".to_owned();
-
-    // Session state
-    let mut connect_otp = "".to_owned();
-    let mut connected_session_id = "".to_owned();
-
-    let mut slide_name = "".to_owned();
-    let mut total_slide_count = 0;
-    let mut current_slide_index = 0;
-
-    // Agent configuration
-    let mut agent_name = "Agent-001".to_owned();
-
-    // Connection state
-    let mut connected = false;
-
-    // GUI state
-    let mut status_message = "Idle".to_owned();
-
+    // eframe::run_simple_native(...) でウィンドウ起動 & UIループ開始
     eframe::run_simple_native("My egui App", options, move |ctx, _frame| {
-        egui::TopBottomPanel::top("header").show(ctx, |ui| {
-            egui::Frame::default()
-                .outer_margin(egui::vec2(0.0, 4.0))
-                .show(ui, |ui| {
-                    ui.horizontal(|ui| {
-                        ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
-                            ui.heading("My egui App");
-                        });
+        // ここで毎フレーム ui_main(ctx) を呼び出す形に分割
+        ui_main(ctx);
+    })
+}
 
-                        ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                            if ui.button("Disconnect").clicked() {
-                                connected = false; // 切断時のロジック
-                                status_message = "Disconnected".to_owned();
-                            }
-                        });
+// ----------------------
+// 4) UIを描画するための関数
+// ----------------------
+fn ui_main(ctx: &egui::Context) {
+    // まずはロックを取ってアプリの状態を取り出す
+    let mut state = APP_STATE.lock().unwrap();
+
+    egui::TopBottomPanel::top("header").show(ctx, |ui| {
+        egui::Frame::default()
+            .outer_margin(egui::vec2(0.0, 4.0))
+            .show(ui, |ui| {
+                ui.horizontal(|ui| {
+                    // 左側
+                    ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+                        ui.heading("My egui App");
+                    });
+
+                    // 右側
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        if ui.button("Disconnect").clicked() {
+                            // 切断処理(例)
+                            state.connected = false;
+                            state.status_message = "Disconnected".to_owned();
+                        }
                     });
                 });
-        });
+            });
+    });
 
-        egui::CentralPanel::default().show(ctx, |ui| {
-            ui.add_space(8.0);
-            if connected {
-                ui.with_layout(
-                    egui::Layout::top_down_justified(egui::Align::Center),
-                    |ui| {
-                        ui.heading("Connected");
-                        ui.label(format!(
-                            "Slide: {}/{}",
-                            current_slide_index, total_slide_count
-                        ));
-                    },
-                );
-            } else {
-                ui.with_layout(
-                    egui::Layout {
-                        main_dir: egui::Direction::TopDown,
-                        main_align: egui::Align::Center,
-                        cross_align: egui::Align::Center,
-                        ..Default::default()
-                    },
-                    |ui| {
-                        ui.heading("Connect");
-                        ui.add_space(12.0);
-                        egui::Grid::new("some_unique_id")
-                            .num_columns(2)
-                            .show(ui, |ui| {
-                                ui.label("Server Address:");
-                                ui.text_edit_singleline(&mut server_address);
-                                ui.end_row();
-                                ui.label("OTP:");
-                                ui.text_edit_singleline(&mut connect_otp);
-                                ui.end_row();
-                                ui.label("Agent Name:");
-                                ui.text_edit_singleline(&mut agent_name);
-                                ui.end_row();
-                            });
+    egui::CentralPanel::default().show(ctx, |ui| {
+        ui.add_space(8.0);
 
-                        ui.add_space(12.0);
-                        ui.add(egui::Button::new("Connect").min_size(egui::vec2(100.0, 25.0)));
-                    },
-                );
-            }
-        });
-
-        egui::TopBottomPanel::bottom("footer").show(ctx, |ui| {
-            ui.horizontal(|ui| {
-                // 左端に接続状況を表示 (幅が足りない場合は '...' にする)
-                ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+        // 接続済みかどうかでUIを分岐
+        if state.connected {
+            ui.with_layout(
+                egui::Layout::top_down_justified(egui::Align::Center),
+                |ui| {
+                    ui.heading("Connected");
                     ui.label(format!(
-                        "Status: {}",
-                        if connected {
-                            "Connected"
-                        } else {
-                            "Not Connected"
-                        }
+                        "Slide: {}/{}",
+                        state.current_slide_index,
+                        state.total_slide_count
                     ));
-                });
+                },
+            );
+        } else {
+            ui.with_layout(
+                egui::Layout {
+                    main_dir: egui::Direction::TopDown,
+                    main_align: egui::Align::Center,
+                    cross_align: egui::Align::Center,
+                    ..Default::default()
+                },
+                |ui| {
+                    ui.heading("Connect");
+                    ui.add_space(12.0);
+                    egui::Grid::new("some_unique_id")
+                        .num_columns(2)
+                        .show(ui, |ui| {
+                            ui.label("Server Address:");
+                            ui.text_edit_singleline(&mut state.server_address);
+                            ui.end_row();
 
-                // 右端に状態メッセージを表示
-                ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                    ui.label(format!("Message: {status_message}"));
-                });
+                            ui.label("OTP:");
+                            ui.text_edit_singleline(&mut state.otp);
+                            ui.end_row();
+
+                            ui.label("Agent Name:");
+                            ui.text_edit_singleline(&mut state.agent_name);
+                            ui.end_row();
+                        });
+
+                    ui.add_space(12.0);
+                    if ui.button("Connect").min_size(egui::vec2(100.0, 25.0)).clicked() {
+                        // ここで実際の接続処理を呼び出す
+                        // ex) start_connection(state.server_address.clone(), state.connect_otp.clone(), state.agent_name.clone());
+                        // など
+                    }
+                },
+            );
+        }
+    });
+
+    egui::TopBottomPanel::bottom("footer").show(ctx, |ui| {
+        ui.horizontal(|ui| {
+            // 左端に接続状況を表示
+            ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+                ui.label(format!(
+                    "Status: {}",
+                    if state.connected {
+                        "Connected"
+                    } else {
+                        "Not Connected"
+                    }
+                ));
+            });
+
+            // 右端に状態メッセージを表示
+            ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                ui.label(format!("Message: {}", state.status_message));
             });
         });
-    })
+    });
 }
