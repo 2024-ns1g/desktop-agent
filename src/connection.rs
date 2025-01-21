@@ -88,7 +88,7 @@ pub async fn establish_ws_connection(
     let register_message = RegisterAgentMessage {
         msg_type: "REGISTER_AGENT",
         agent_name,
-        agent_type: "DESKTOP",
+        agent_type: "SHOW_SLIDE_DESKTOP",
         token,
     };
     let register_message = serde_json::to_string(&register_message).unwrap();
