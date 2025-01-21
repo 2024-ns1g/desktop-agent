@@ -18,6 +18,10 @@ struct AppState {
 
     // 何かメッセージをUIに表示したいとき
     status_message: String,
+
+    // スライドの情報
+    current_slide_index: usize,
+    total_slide_count: usize,
 }
 
 static APP_STATE: Lazy<Mutex<AppState>> = Lazy::new(|| Mutex::new(AppState::default()));
