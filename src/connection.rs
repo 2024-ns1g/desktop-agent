@@ -183,27 +183,6 @@ pub struct SessionInfo {
     pub available_votes: Vec<SessionInfoAvailableVote>,
     pub state: SessionInfoState,
 }
-// pub async fn verify_otp(
-//     client: &Client,
-//     base_url: &str,
-//     otp: &str,
-// ) -> Result<VerifyOtpResponse, anyhow::Error> {
-//     debug!("Verifying OTP: {}", otp);
-//     let url = format!("{}/session/agent/verify", base_url);
-//     let request = VerifyOtpRequest {
-//         otp: otp.to_string(),
-//     };
-//     let resp = client.post(&url).json(&request).send().await?;
-//
-//     if resp.status().is_success() {
-//         let response = resp.json::<VerifyOtpResponse>().await?;
-//         info!("OTP verified successfully");
-//         Ok(response)
-//     } else {
-//         error!("OTP verification failed");
-//         Err(anyhow::anyhow!("OTP verification failed"))
-//     }
-// }
 
 pub async fn get_session_info(
     client: &Client,
