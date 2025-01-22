@@ -154,7 +154,9 @@ fn ui_main(ctx: &egui::Context) {
             });
         } else {
             ui.vertical_centered(|ui| {
+                ui.add_space(12.0);
                 ui.heading("Connect");
+                ui.add_space(12.0);
                 egui::Grid::new("connect_grid")
                     .num_columns(2)
                     .show(ui, |ui| {
@@ -176,7 +178,6 @@ fn ui_main(ctx: &egui::Context) {
                     });
 
                 ui.add_space(12.0);
-                
                 if ui.button("Connect").clicked() {
                     state.connect_to_session();
                 }
