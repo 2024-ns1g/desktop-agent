@@ -166,10 +166,10 @@ struct SessionInfoVote {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SessionInfoState {
     #[serde(rename = "currentPage")]
-    current_page: i8,
+    pub current_page: i8,
     #[serde(rename = "currentVoteId")]
-    available_vote_id: Option<String>,
-    votes: Vec<SessionInfoVote>,
+    pub available_vote_id: Option<String>,
+    pub votes: Vec<SessionInfoVote>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
