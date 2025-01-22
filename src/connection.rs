@@ -39,15 +39,32 @@ pub async fn verify_otp(
     }
 }
 
+// #[derive(Serialize)]
+// struct RegisterAgentMessage<'a> {
+//     #[serde(rename = "requestType")]
+//     msg_type: &'a str,
+//     #[serde(rename = "agentName")]
+//     agent_name: &'a str,
+//     #[serde(rename = "agentType")]
+//     agent_type: &'a str,
+//     token: &'a str,
+// }
+
 #[derive(Serialize)]
-struct RegisterAgentMessage<'a> {
-    #[serde(rename = "requestType")]
-    msg_type: &'a str,
+struct RegisterAgentMessageData<'a> {
     #[serde(rename = "agentName")]
     agent_name: &'a str,
     #[serde(rename = "agentType")]
     agent_type: &'a str,
     token: &'a str,
+}
+
+#[derive(Serialize)]
+struct RegisterAgentMessage<'a> {
+    #[serde(rename = "requestType")]
+    msg_type: &'a str,
+    // dataオブジェクトを追加
+    data: RegisterAgentMessageData<'a>,
 }
 
 #[derive(Deserialize)]
@@ -82,11 +99,20 @@ pub async fn run_websocket(
         tokio_tungstenite::connect_async(format!("{}/agent?sessionId={}", base_url, session_id))
             .await?;
 
+    // let register_message = serde_json::to_string(&RegisterAgentMessage {
+    //     msg_type: "REGIST_AGENT",
+    //     agent_name,
+    //     agent_type: "SHOW_SLIDE_DESKTOP",
+    //     token,
+    // })?;
+    
     let register_message = serde_json::to_string(&RegisterAgentMessage {
         msg_type: "REGIST_AGENT",
-        agent_name,
-        agent_type: "SHOW_SLIDE_DESKTOP",
-        token,
+        data: RegisterAgentMessageData {
+            agent_name,
+            agent_type: "SHOW_SLIDE_DESKTOP",
+            token,
+        },
     })?;
 
     ws_stream
