@@ -90,10 +90,12 @@ pub async fn run_websocket(
     } else {
         "ws"
     };
-    let (mut ws_stream, _) =
-        tokio_tungstenite::connect_async(format!("{}://{}/agent?sessionId={}", prefix, base_url, session_id))
-            .await?;
-    
+    let (mut ws_stream, _) = tokio_tungstenite::connect_async(format!(
+        "{}://{}/agent?sessionId={}",
+        prefix, base_url, session_id
+    ))
+    .await?;
+
     let register_message = serde_json::to_string(&RegisterAgentMessage {
         msg_type: "REGIST_AGENT",
         data: RegisterAgentMessageData {
@@ -120,65 +122,107 @@ pub async fn run_websocket(
     Ok(())
 }
 
-
 #[derive(Serialize, Deserialize, Debug)]
-struct SessionInfoPageScript<'a> {
-    content: &'a str,
+struct SessionInfoPageScript {
+    content: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct SessionInfoPage<'a> {
+pub struct SessionInfoPage {
     #[serde(rename = "pageId")]
-    page_id: &'a str,
-    title: &'a str,
-    scripts: Vec<SessionInfoPageScript<'a>>,
+    page_id: String,
+    title: String,
+    scripts: Vec<SessionInfoPageScript>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct SessionInfoAvailableVoteChoice<'a> {
+struct SessionInfoAvailableVoteChoice {
     #[serde(rename = "choiceId")]
-    choice_id: &'a str,
-    title: &'a str,
-    description: Option<&'a str>,
-    color: Option<&'a str>,
+    choice_id: String,
+    title: String,
+    description: Option<String>,
+    color: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct SessionInfoAvailableVote<'a> {
+pub struct SessionInfoAvailableVote {
     #[serde(rename = "voteId")]
-    vote_id: &'a str,
-    title: &'a str,
-    description: Option<&'a str>,
-    choices: Vec<SessionInfoAvailableVoteChoice<'a>>,
+    vote_id: String,
+    title: String,
+    description: Option<String>,
+    choices: Vec<SessionInfoAvailableVoteChoice>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct SessionInfoVote<'a> {
+struct SessionInfoVote {
     #[serde(rename = "voteId")]
-    vote_id: &'a str,
+    vote_id: String,
     #[serde(rename = "choiceId")]
-    choice_id: &'a str,
+    choice_id: String,
     #[serde(rename = "voterId")]
-    voter_id: &'a str,
+    voter_id: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct SessionInfoState<'a> {
+pub struct SessionInfoState {
     #[serde(rename = "currentPage")]
     current_page: i8,
     #[serde(rename = "currentVoteId")]
-    available_vote_id: Option<&'a str>,
-    votes: Vec<SessionInfoVote<'a>>,
+    available_vote_id: Option<String>,
+    votes: Vec<SessionInfoVote>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct SessionInfo<'a> {
+pub struct SessionInfo {
     #[serde(rename = "sessionId")]
-    session_id: &'a str,
+    pub session_id: String,
     #[serde(rename = "slideId")]
-    slide_id: &'a str,
-    pages: Vec<SessionInfoPage<'a>>,
+    pub slide_id: String,
+    pub pages: Vec<SessionInfoPage>,
     #[serde(rename = "availableVotes")]
-    available_votes: Vec<SessionInfoAvailableVote<'a>>,
-    state: SessionInfoState<'a>,
+    pub available_votes: Vec<SessionInfoAvailableVote>,
+    pub state: SessionInfoState,
+}
+// pub async fn verify_otp(
+//     client: &Client,
+//     base_url: &str,
+//     otp: &str,
+// ) -> Result<VerifyOtpResponse, anyhow::Error> {
+//     debug!("Verifying OTP: {}", otp);
+//     let url = format!("{}/session/agent/verify", base_url);
+//     let request = VerifyOtpRequest {
+//         otp: otp.to_string(),
+//     };
+//     let resp = client.post(&url).json(&request).send().await?;
+//
+//     if resp.status().is_success() {
+//         let response = resp.json::<VerifyOtpResponse>().await?;
+//         info!("OTP verified successfully");
+//         Ok(response)
+//     } else {
+//         error!("OTP verification failed");
+//         Err(anyhow::anyhow!("OTP verification failed"))
+//     }
+// }
+
+pub async fn get_session_info(
+    client: &Client,
+    base_url: &str,
+    session_id: &str,
+    token: &str,
+) -> Result<SessionInfo, anyhow::Error> {
+    let url = format!("{}/api/session/{}/agent/info", base_url, session_id);
+    let resp = client
+        .get(&url)
+        .header("Authorization", format!("Bearer {}", token))
+        .send()
+        .await?;
+    if resp.status().is_success() {
+        let response = resp.json::<SessionInfo>().await?;
+        info!("Session info received successfully");
+        Ok(response)
+    } else {
+        error!("Failed to get session info");
+        Err(anyhow::anyhow!("Failed to get session info"))
+    }
 }
