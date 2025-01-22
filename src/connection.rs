@@ -123,25 +123,25 @@ pub async fn run_websocket(
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct SessionInfoPageScript {
-    content: String,
+pub struct SessionInfoPageScript {
+    pub content: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SessionInfoPage {
     #[serde(rename = "pageId")]
-    page_id: String,
-    title: String,
-    scripts: Vec<SessionInfoPageScript>,
+    pub page_id: String,
+    pub title: String,
+    pub scripts: Vec<SessionInfoPageScript>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct SessionInfoAvailableVoteChoice {
+pub struct SessionInfoAvailableVoteChoice {
     #[serde(rename = "choiceId")]
-    choice_id: String,
-    title: String,
-    description: Option<String>,
-    color: Option<String>,
+    pub choice_id: String,
+    pub title: String,
+    pub description: Option<String>,
+    pub color: Option<String>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -154,7 +154,7 @@ pub struct SessionInfoAvailableVote {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-struct SessionInfoVote {
+pub struct SessionInfoVote {
     #[serde(rename = "voteId")]
     pub vote_id: String,
     #[serde(rename = "choiceId")]
