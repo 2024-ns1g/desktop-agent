@@ -98,13 +98,6 @@ pub async fn run_websocket(
     let (mut ws_stream, _) =
         tokio_tungstenite::connect_async(format!("{}/agent?sessionId={}", base_url, session_id))
             .await?;
-
-    // let register_message = serde_json::to_string(&RegisterAgentMessage {
-    //     msg_type: "REGIST_AGENT",
-    //     agent_name,
-    //     agent_type: "SHOW_SLIDE_DESKTOP",
-    //     token,
-    // })?;
     
     let register_message = serde_json::to_string(&RegisterAgentMessage {
         msg_type: "REGIST_AGENT",
