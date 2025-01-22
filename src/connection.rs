@@ -119,3 +119,66 @@ pub async fn run_websocket(
 
     Ok(())
 }
+
+
+#[derive(Serialize)]
+struct SessionInfoPageScript<'a> {
+    content: &'a str,
+}
+
+#[derive(Serialize)]
+struct SessionInfoPage<'a> {
+    #[serde(rename = "pageId")]
+    page_id: &'a str,
+    title: &'a str,
+    scripts: Vec<SessionInfoPageScript<'a>>,
+}
+
+#[derive(Serialize)]
+struct SessionInfoAvailableVoteChoice<'a> {
+    #[serde(rename = "choiceId")]
+    choice_id: &'a str,
+    title: &'a str,
+    description: Option<&'a str>,
+    color: Option<&'a str>,
+}
+
+#[derive(Serialize)]
+struct SessionInfoAvailableVote<'a> {
+    #[serde(rename = "voteId")]
+    vote_id: &'a str,
+    title: &'a str,
+    description: Option<&'a str>,
+    choices: Vec<SessionInfoAvailableVoteChoice<'a>>,
+}
+
+#[derive(Serialize)]
+struct SessionInfoVote<'a> {
+    #[serde(rename = "voteId")]
+    vote_id: &'a str,
+    #[serde(rename = "choiceId")]
+    choice_id: &'a str,
+    #[serde(rename = "voterId")]
+    voter_id: &'a str,
+}
+
+#[derive(Serialize)]
+struct SessionInfoState<'a> {
+    #[serde(rename = "currentPage")]
+    current_page: &'a i8,
+    #[serde(rename = "currentVoteId")]
+    available_vote_id: Option<&'a str>,
+    votes: Vec<SessionInfoVote<'a>>,
+}
+
+#[derive(Serialize)]
+struct SessionInfo<'a> {
+    #[serde(rename = "sessionId")]
+    session_id: &'a str,
+    #[serde(rename = "slideId")]
+    slide_id: &'a str,
+    pages: Vec<SessionInfoPage<'a>>,
+    #[serde(rename = "availableVotes")]
+    available_votes: Vec<SessionInfoAvailableVote<'a>>,
+    state: SessionInfoState<'a>,
+}
