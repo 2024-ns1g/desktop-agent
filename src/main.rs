@@ -115,7 +115,7 @@ fn main() -> eframe::Result {
 }
 
 fn ui_main(ctx: &egui::Context) {
-    // set catppuccin theme
+    ctx.set_visuals(egui::Visuals::light());
 
     let mut state = APP_STATE.lock().unwrap();
 
