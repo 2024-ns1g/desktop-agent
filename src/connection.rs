@@ -84,8 +84,14 @@ pub async fn run_websocket(
     token: &str,
     agent_name: &str,
 ) -> Result<(), anyhow::Error> {
+    // ws or wss
+    let prefix = if base_url.starts_with("https") {
+        "wss"
+    } else {
+        "ws"
+    };
     let (mut ws_stream, _) =
-        tokio_tungstenite::connect_async(format!("{}/agent?sessionId={}", base_url, session_id))
+        tokio_tungstenite::connect_async(format!("{}://{}/agent?sessionId={}", prefix, base_url, session_id))
             .await?;
     
     let register_message = serde_json::to_string(&RegisterAgentMessage {
