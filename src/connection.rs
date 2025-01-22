@@ -83,7 +83,7 @@ pub async fn run_websocket(
             .await?;
 
     let register_message = serde_json::to_string(&RegisterAgentMessage {
-        msg_type: "REGISTER_AGENT",
+        msg_type: "REGIST_AGENT",
         agent_name,
         agent_type: "SHOW_SLIDE_DESKTOP",
         token,
