@@ -16,6 +16,7 @@ struct AppState {
     token: String,
     connected: bool,
     status_message: String,
+    slide_name: String,
     current_slide_index: usize,
     total_slide_count: usize,
 }
@@ -83,7 +84,7 @@ impl AppState {
             match result {
                 Ok(response) => {
                     let mut state = APP_STATE.lock().unwrap();
-                    // TODO: Update App state
+                    state.slide_name = response.title;
                 }
                 Err(e) => {
                     let mut state = APP_STATE.lock().unwrap();
