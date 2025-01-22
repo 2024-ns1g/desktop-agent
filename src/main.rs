@@ -52,6 +52,11 @@ impl AppState {
     }
 
     pub fn establish_ws_connection(&mut self) {
+        {
+            let mut state = APP_STATE.lock().unwrap();
+            state.connected = true;
+            state.status_message = "Connecting to WebSocket...".to_owned();
+        }
         let session_id = self.session_id.clone();
         let token = self.token.clone();
         let agent_name = self.agent_name.clone();
@@ -59,10 +64,6 @@ impl AppState {
 
         std::thread::spawn(move || {
             let rt = tokio::runtime::Runtime::new().unwrap();
-
-            let mut state = APP_STATE.lock().unwrap();
-            state.connected = true;
-            state.status_message = "Connecting to WebSocket...".to_owned();
 
             let result = rt.block_on(run_websocket(
                 &session_server_address,
