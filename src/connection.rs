@@ -178,6 +178,7 @@ pub struct SessionInfo {
     pub session_id: String,
     #[serde(rename = "slideId")]
     pub slide_id: String,
+    pub title: String,
     pub pages: Vec<SessionInfoPage>,
     #[serde(rename = "availableVotes")]
     pub available_votes: Vec<SessionInfoAvailableVote>,
