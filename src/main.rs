@@ -74,7 +74,7 @@ impl AppState {
 
     pub fn fetch_session_info(&mut self) {
         let client = reqwest::Client::new();
-        let base_url = self.primary_server_address.clone();
+        let base_url = self.session_server_address.clone();
         let session_id = self.session_id.clone();
         let token = self.token.clone();
         std::thread::spawn(move || {
