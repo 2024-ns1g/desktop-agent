@@ -59,6 +59,11 @@ impl AppState {
 
         std::thread::spawn(move || {
             let rt = tokio::runtime::Runtime::new().unwrap();
+
+            let mut state = APP_STATE.lock().unwrap();
+            state.connected = true;
+            state.status_message = "Connecting to WebSocket...".to_owned();
+
             let result = rt.block_on(run_websocket(
                 &session_server_address,
                 &session_id,
