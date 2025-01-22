@@ -122,7 +122,9 @@ fn ui_main(ctx: &egui::Context) {
                 ui.horizontal(|ui| {
                     // Left side
                     ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
-                        ui.heading("My egui App");
+                        if state.connected {
+                            ui.label(&state.slide_name);
+                        }
                     });
 
                     // Right side
