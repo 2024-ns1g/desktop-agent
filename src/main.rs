@@ -175,6 +175,8 @@ fn ui_main(ctx: &egui::Context) {
                         ui.end_row();
                     });
 
+                ui.add_space(12.0);
+                
                 if ui.button("Connect").clicked() {
                     state.connect_to_session();
                 }
