@@ -80,7 +80,7 @@ fn main() -> eframe::Result {
 
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
-            .with_title("Presentation Controller")
+            .with_title("PresenStudio agent")
             .with_inner_size([400.0, 300.0]),
         ..Default::default()
     };
