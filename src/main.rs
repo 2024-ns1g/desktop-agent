@@ -85,7 +85,7 @@ fn main() -> eframe::Result {
         ..Default::default()
     };
 
-    eframe::run_simple_native("Presentation Controller", options, move |ctx, _frame| {
+    eframe::run_simple_native("PresenStudio agent", options, move |ctx, _frame| {
         ui_main(ctx);
     })
 }
@@ -94,13 +94,25 @@ fn ui_main(ctx: &egui::Context) {
     let mut state = APP_STATE.lock().unwrap();
 
     egui::TopBottomPanel::top("header").show(ctx, |ui| {
-        ui.horizontal(|ui| {
-            ui.heading("Presentation Controller");
-            if ui.button("Disconnect").clicked() {
-                state.connected = false;
-                state.status_message = "Disconnected".to_owned();
-            }
-        });
+        egui::Frame::default()
+            .outer_margin(egui::vec2(0.0, 4.0))
+            .show(ui, |ui| {
+                ui.horizontal(|ui| {
+                    // Left side
+                    ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
+                        ui.heading("My egui App");
+                    });
+
+                    // Right side
+                    ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
+                        if ui.button("Disconnect").clicked() {
+                            // Disconnect logic (example)
+                            state.connected = false;
+                            state.status_message = "Disconnected".to_owned();
+                        }
+                    });
+                });
+            });
     });
 
     egui::CentralPanel::default().show(ctx, |ui| {
@@ -144,7 +156,14 @@ fn ui_main(ctx: &egui::Context) {
 
     egui::TopBottomPanel::bottom("footer").show(ctx, |ui| {
         ui.horizontal(|ui| {
-            ui.label(format!("Status: {}", if state.connected { "Connected" } else { "Not Connected" }));
+            ui.label(format!(
+                "Status: {}",
+                if state.connected {
+                    "Connected"
+                } else {
+                    "Not Connected"
+                }
+            ));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 ui.label(&state.status_message);
             });
