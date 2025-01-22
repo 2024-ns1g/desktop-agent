@@ -39,17 +39,6 @@ pub async fn verify_otp(
     }
 }
 
-// #[derive(Serialize)]
-// struct RegisterAgentMessage<'a> {
-//     #[serde(rename = "requestType")]
-//     msg_type: &'a str,
-//     #[serde(rename = "agentName")]
-//     agent_name: &'a str,
-//     #[serde(rename = "agentType")]
-//     agent_type: &'a str,
-//     token: &'a str,
-// }
-
 #[derive(Serialize)]
 struct RegisterAgentMessageData<'a> {
     #[serde(rename = "agentName")]
