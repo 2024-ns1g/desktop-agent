@@ -37,6 +37,8 @@ impl AppState {
                         state.session_id = response.session_id;
                         state.token = response.token;
                         state.status_message = "OTP verified successfully.".to_owned();
+
+                        state.connected = true; // Workaround
                     }
                     // Fetch session info
                     APP_STATE.lock().unwrap().fetch_session_info();
@@ -52,11 +54,6 @@ impl AppState {
     }
 
     pub fn establish_ws_connection(&mut self) {
-        {
-            let mut state = APP_STATE.lock().unwrap();
-            state.connected = true;
-            state.status_message = "Connecting to WebSocket...".to_owned();
-        }
         let session_id = self.session_id.clone();
         let token = self.token.clone();
         let agent_name = self.agent_name.clone();
@@ -72,12 +69,14 @@ impl AppState {
                 &agent_name,
             ));
 
-            let mut state = APP_STATE.lock().unwrap();
-            state.connected = false;
-            state.status_message = match result {
-                Ok(()) => "WebSocket connection closed.".to_owned(),
-                Err(e) => format!("WebSocket error: {}", e),
-            };
+            {
+                let mut state = APP_STATE.lock().unwrap();
+                state.connected = false;
+                state.status_message = match result {
+                    Ok(()) => "WebSocket connection closed.".to_owned(),
+                    Err(e) => format!("WebSocket error: {}", e),
+                };
+            }
         });
     }
 
