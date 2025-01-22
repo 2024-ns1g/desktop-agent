@@ -1,5 +1,5 @@
 // main.rs
-use connection::{run_websocket, verify_otp};
+use connection::{get_session_info, run_websocket, verify_otp};
 use eframe::egui;
 use once_cell::sync::Lazy;
 use std::sync::Mutex;
@@ -69,6 +69,27 @@ impl AppState {
                 Ok(()) => "WebSocket connection closed.".to_owned(),
                 Err(e) => format!("WebSocket error: {}", e),
             };
+        });
+    }
+
+    pub fn fetch_session_info(&mut self) {
+        let client = reqwest::Client::new();
+        let base_url = self.primary_server_address.clone();
+        let session_id = self.session_id.clone();
+        let token = self.token.clone();
+        std::thread::spawn(move || {
+            let rt = tokio::runtime::Runtime::new().unwrap();
+            let result = rt.block_on(get_session_info(&client, &base_url, &session_id, &token));
+            match result {
+                Ok(response) => {
+                    let mut state = APP_STATE.lock().unwrap();
+                    // TODO: Update App state
+                }
+                Err(e) => {
+                    let mut state = APP_STATE.lock().unwrap();
+                    state.status_message = format!("Failed to fetch session info: {}", e);
+                }
+            }
         });
     }
 }
