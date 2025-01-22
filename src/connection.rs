@@ -121,12 +121,12 @@ pub async fn run_websocket(
 }
 
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize, Debug)]
 struct SessionInfoPageScript<'a> {
     content: &'a str,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize, Debug)]
 struct SessionInfoPage<'a> {
     #[serde(rename = "pageId")]
     page_id: &'a str,
@@ -134,7 +134,7 @@ struct SessionInfoPage<'a> {
     scripts: Vec<SessionInfoPageScript<'a>>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize, Debug)]
 struct SessionInfoAvailableVoteChoice<'a> {
     #[serde(rename = "choiceId")]
     choice_id: &'a str,
@@ -143,7 +143,7 @@ struct SessionInfoAvailableVoteChoice<'a> {
     color: Option<&'a str>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize, Debug)]
 struct SessionInfoAvailableVote<'a> {
     #[serde(rename = "voteId")]
     vote_id: &'a str,
@@ -152,7 +152,7 @@ struct SessionInfoAvailableVote<'a> {
     choices: Vec<SessionInfoAvailableVoteChoice<'a>>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize, Debug)]
 struct SessionInfoVote<'a> {
     #[serde(rename = "voteId")]
     vote_id: &'a str,
@@ -162,16 +162,16 @@ struct SessionInfoVote<'a> {
     voter_id: &'a str,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize, Debug)]
 struct SessionInfoState<'a> {
     #[serde(rename = "currentPage")]
-    current_page: &'a i8,
+    current_page: i8,
     #[serde(rename = "currentVoteId")]
     available_vote_id: Option<&'a str>,
     votes: Vec<SessionInfoVote<'a>>,
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, Deserialize, Debug)]
 struct SessionInfo<'a> {
     #[serde(rename = "sessionId")]
     session_id: &'a str,
