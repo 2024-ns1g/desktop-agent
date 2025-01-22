@@ -147,20 +147,20 @@ struct SessionInfoAvailableVoteChoice {
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SessionInfoAvailableVote {
     #[serde(rename = "voteId")]
-    vote_id: String,
-    title: String,
-    description: Option<String>,
-    choices: Vec<SessionInfoAvailableVoteChoice>,
+    pub vote_id: String,
+    pub title: String,
+    pub description: Option<String>,
+    pub choices: Vec<SessionInfoAvailableVoteChoice>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
 struct SessionInfoVote {
     #[serde(rename = "voteId")]
-    vote_id: String,
+    pub vote_id: String,
     #[serde(rename = "choiceId")]
-    choice_id: String,
+    pub choice_id: String,
     #[serde(rename = "voterId")]
-    voter_id: String,
+    pub voter_id: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
