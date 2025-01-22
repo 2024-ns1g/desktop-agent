@@ -1,4 +1,3 @@
-// main.rs
 use connection::{get_session_info, run_websocket, verify_otp};
 use eframe::egui;
 use once_cell::sync::Lazy;
@@ -116,6 +115,8 @@ fn main() -> eframe::Result {
 }
 
 fn ui_main(ctx: &egui::Context) {
+    // set catppuccin theme
+
     let mut state = APP_STATE.lock().unwrap();
 
     egui::TopBottomPanel::top("header").show(ctx, |ui| {
