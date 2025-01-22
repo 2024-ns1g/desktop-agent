@@ -4,7 +4,6 @@ use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use tokio_tungstenite::tungstenite;
 use log::{debug, info, error};
-use std::{sync::mpsc::Sender, thread::sleep, time::Duration};
 
 #[derive(Serialize, Debug)]
 pub struct VerifyOtpRequest {
@@ -52,9 +51,9 @@ struct RegisterAgentMessage<'a> {
     token: &'a str,
 }
 
-#[derive(Deserialize, Debug, Clone)]
+#[derive(Deserialize)]
 #[serde(tag = "type")]
-pub enum Event {
+enum Event {
     #[serde(rename = "KEY_PRESS")]
     KeyPress { key: String },
 }
@@ -69,11 +68,11 @@ async fn handle_event(event: Event) {
 
                 match key.as_str() {
                     "ArrowRight" => {
-                        enigo.key(Key::RightArrow, Click);
+                        enigo.key(Key::RightArrow, Click).unwrap();
                         info!("Right arrow key pressed");
                     }
                     "ArrowLeft" => {
-                        enigo.key(Key::LeftArrow, Click);
+                        enigo.key(Key::LeftArrow, Click).unwrap();
                         info!("Left arrow key pressed");
                     }
                     _ => {}
@@ -88,62 +87,30 @@ pub async fn establish_ws_connection(
     session_id: &str,
     token: &str,
     agent_name: &str,
-    event_sender: Sender<Event>,
 ) -> Result<(), anyhow::Error> {
-    loop {
-        debug!("WebSocketに接続を試みます: {}", base_url);
-        match tokio_tungstenite::connect_async(format!(
-            "{}/agent?sessionId={}",
-            base_url, session_id
-        ))
-        .await
-        {
-            Ok((ws_stream, _)) => {
-                info!("WebSocket接続が確立されました");
-                let (mut write, read) = ws_stream.split();
-
-                // 登録メッセージを送信
-                let register_message = RegisterAgentMessage {
-                    msg_type: "REGISTER_AGENT",
-                    agent_name,
-                    agent_type: "SHOW_SLIDE_DESKTOP",
-                    token,
-                };
-                let register_message = serde_json::to_string(&register_message)?;
-                debug!("登録メッセージを送信します: {}", register_message);
-                write
-                    .send(tungstenite::Message::text(register_message))
-                    .await?;
-
-                // メッセージの読み取りと処理
-                read.for_each(|msg| async {
-                    match msg {
-                        Ok(message) => {
-                            if let Ok(text) = message.to_text() {
-                                match serde_json::from_str::<Event>(text) {
-                                    Ok(event) => {
-                                        handle_event(event.clone()).await;
-                                        if let Err(e) = event_sender.send(event) {
-                                            error!("イベントの送信に失敗しました: {}", e);
-                                        }
-                                    }
-                                    Err(e) => error!("イベントの解析に失敗しました: {}", e),
-                                }
-                            }
-                        }
-                        Err(e) => {
-                            error!("WebSocketエラー: {}", e);
-                        }
-                    }
-                })
-                .await;
-            }
-            Err(e) => {
-                error!("WebSocket接続に失敗しました: {}", e);
-            }
-        }
-
-        info!("5秒後にWebSocketへの再接続を試みます...");
-        sleep(Duration::from_secs(5));
-    }
+    debug!("Establishing WebSocket connection to {}", base_url);
+    let (ws_stream, _) = tokio_tungstenite::connect_async(format!(
+        "{}/agent?sessionId={}",
+        base_url, session_id
+    ))
+    .await?;
+    info!("WebSocket connection established");
+    let (mut write, read) = ws_stream.split();
+    let register_message = RegisterAgentMessage {
+        msg_type: "REGISTER_AGENT",
+        agent_name,
+        agent_type: "SHOW_SLIDE_DESKTOP",
+        token,
+    };
+    let register_message = serde_json::to_string(&register_message).unwrap();
+    debug!("Sending register message: {}", register_message);
+    write
+        .send(tungstenite::Message::text(register_message))
+        .await?;
+    tokio::task::spawn(read.for_each(|msg| async {
+        let msg = msg.unwrap();
+        let event: Event = serde_json::from_str(&msg.to_string()).unwrap();
+        handle_event(event).await;
+    }));
+    Ok(())
 }
