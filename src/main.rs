@@ -39,6 +39,9 @@ impl AppState {
                         state.token = response.token;
                         state.status_message = "OTP verified successfully.".to_owned();
                     }
+                    // Fetch session info
+                    APP_STATE.lock().unwrap().fetch_session_info();
+                    // Establish WebSocket connection
                     APP_STATE.lock().unwrap().establish_ws_connection();
                 }
                 Err(e) => {
