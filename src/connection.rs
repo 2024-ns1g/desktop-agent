@@ -84,15 +84,12 @@ pub async fn run_websocket(
     token: &str,
     agent_name: &str,
 ) -> Result<(), anyhow::Error> {
-    // ws or wss
-    let prefix = if base_url.starts_with("https") {
-        "wss"
-    } else {
-        "ws"
-    };
+    // http/httpsをws/wssにしたbase_urlを作成
+    let ws_base_url = base_url.replace("http", "ws");
+
     let (mut ws_stream, _) = tokio_tungstenite::connect_async(format!(
-        "{}://{}/agent?sessionId={}",
-        prefix, base_url, session_id
+        "{}/agent?sessionId={}",
+        ws_base_url, session_id
     ))
     .await?;
 
