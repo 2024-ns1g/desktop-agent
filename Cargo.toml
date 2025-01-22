@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.95"
+catppuccin-egui = "5.3.1"
 eframe = "0.30.0"
 egui = "0.30.0"
 enigo = { version = "0.3.0", features = ["libei", "serde", "wayland", "x11rb"] }
