@@ -3,8 +3,10 @@ use futures_util::{SinkExt, StreamExt};
 use log::{debug, error, info};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use tokio::sync::{mpsc::UnboundedSender, oneshot};
-use tokio_tungstenite::{tungstenite, WebSocketStream};
+use tokio::sync::mpsc::UnboundedSender;
+use tokio::sync::oneshot;
+use tokio_tungstenite::tungstenite;
+use tokio_tungstenite::WebSocketStream;
 
 #[derive(Debug)]
 pub struct WsHandle {
@@ -67,6 +69,7 @@ struct RegisterAgentMessage<'a> {
     data: RegisterAgentMessageData<'a>,
 }
 
+// CHANGED: イベント型を拡張
 #[derive(Deserialize)]
 #[serde(tag = "type")]
 enum Event {
@@ -81,7 +84,7 @@ enum Event {
 
 async fn handle_event(
     event: Event,
-    sender: &UnboundedSender<crate::WsEvent>,
+    sender: &std::sync::mpsc::Sender<crate::WsEvent>,
 ) -> Result<(), anyhow::Error> {
     match event {
         Event::KeyPress { key } => {
@@ -116,40 +119,35 @@ pub async fn run_websocket(
     session_id: &str,
     token: &str,
     agent_name: &str,
-    sender: UnboundedSender<crate::WsEvent>,
+    sender: std::sync::mpsc::Sender<crate::WsEvent>,
 ) -> Result<WsHandle, anyhow::Error> {
     let ws_base_url = base_url.replace("http", "ws");
-    let (mut ws_stream, _) = tokio_tungstenite::connect_async(format!(
-        "{}/agent?sessionId={}",
-        ws_base_url, session_id
-    ))
-    .await?;
+    let (mut ws_stream, _) =
+        tokio_tungstenite::connect_async(format!("{}/agent?sessionId={}", ws_base_url, session_id))
+            .await?;
 
     let (shutdown_tx, shutdown_rx) = oneshot::channel();
 
-    let agent_name = agent_name.to_string(); // 修正：所有権を取得
-    let token = token.to_string();
-
-    let send_task = async move {
+    // メインのWebSocket処理タスク
+    let mut stream = ws_stream.split();
+    let send_task = async {
         let register_message = serde_json::to_string(&RegisterAgentMessage {
             msg_type: "REGIST_AGENT",
             data: RegisterAgentMessageData {
-                agent_name: &agent_name,
+                agent_name,
                 agent_type: "SHOW_SLIDE_DESKTOP",
-                token: &token,
+                token,
             },
         })?;
-
-        ws_stream
+        stream
+            .0
             .send(tungstenite::Message::text(register_message))
             .await?;
-
-        Ok::<_, anyhow::Error>(())
+        Ok::<_, anyhow::Error>(stream.0)
     };
 
-    let recv_task = async move {
-        let (mut sink, mut stream) = ws_stream.split();
-        while let Some(msg) = stream.next().await {
+    let recv_task = async {
+        while let Some(msg) = stream.1.next().await {
             let msg = msg?;
             let event: Event = serde_json::from_str(&msg.to_string())?;
             handle_event(event, &sender).await?;
@@ -161,12 +159,12 @@ pub async fn run_websocket(
         tokio::select! {
             result = send_task => {
                 if let Err(e) = result {
-                    error!("送信エラー: {}", e);
+                    error!("送信タスクエラー: {}", e);
                 }
             }
             result = recv_task => {
                 if let Err(e) = result {
-                    error!("受信エラー: {}", e);
+                    error!("受信タスクエラー: {}", e);
                 }
             }
             _ = shutdown_rx => {

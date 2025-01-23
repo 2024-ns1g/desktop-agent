@@ -2,7 +2,6 @@ use connection::{get_session_info, run_websocket, verify_otp, WsHandle};
 use eframe::egui;
 use once_cell::sync::Lazy;
 use std::sync::Mutex;
-use tokio::sync::mpsc::{unbounded_channel, UnboundedReceiver, UnboundedSender};
 
 mod connection;
 
@@ -29,7 +28,7 @@ struct AppState {
     total_slide_count: usize,
     logs: Vec<String>,
     ws_handle: Option<WsHandle>,
-    ws_event_receiver: Option<UnboundedReceiver<WsEvent>>,
+    ws_event_receiver: Option<std::sync::mpsc::Receiver<WsEvent>>,
 }
 
 impl AppState {
@@ -44,7 +43,7 @@ impl AppState {
         let otp = self.otp.clone();
 
         self.logs.push("OTP検証を開始...".to_string());
-        
+
         std::thread::spawn(move || {
             let rt = tokio::runtime::Runtime::new().unwrap();
             let result = rt.block_on(verify_otp(&client, &base_url, &otp));
@@ -73,12 +72,12 @@ impl AppState {
         let token = self.token.clone();
         let agent_name = self.agent_name.clone();
         let session_server_address = self.session_server_address.clone();
-        
-        let (sender, receiver) = unbounded_channel();
+
+        let (sender, receiver) = std::sync::mpsc::channel();
         self.ws_event_receiver = Some(receiver);
 
         self.logs.push("WebSocket接続を開始...".to_string());
-        
+
         std::thread::spawn(move || {
             let rt = tokio::runtime::Runtime::new().unwrap();
 
@@ -144,8 +143,7 @@ fn main() -> eframe::Result {
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
             .with_title("PresenStudio agent")
-            .with_inner_size([600.0, 400.0])
-            .with_resizable(true),
+            .with_inner_size([400.0, 300.0]),
         ..Default::default()
     };
 
@@ -155,6 +153,8 @@ fn main() -> eframe::Result {
 }
 
 fn ui_main(ctx: &egui::Context) {
+    ctx.set_visuals(egui::Visuals::light());
+
     ctx.set_visuals(egui::Visuals::light());
 
     let mut pending_events = Vec::new();
@@ -175,7 +175,9 @@ fn ui_main(ctx: &egui::Context) {
                     state.current_slide_index = index;
                     state.total_slide_count = total;
                     state.slide_name = format!("スライド {}", index + 1);
-                    state.logs.push(format!("スライド変更: {}/{}", index, total));
+                    state
+                        .logs
+                        .push(format!("スライド変更: {}/{}", index, total));
                 }
                 WsEvent::KeyPressed(key) => {
                     state.status_message = format!("キー押下: {}", key);
@@ -195,6 +197,8 @@ fn ui_main(ctx: &egui::Context) {
         }
     }
 
+    let mut state = APP_STATE.lock().unwrap();
+
     egui::TopBottomPanel::top("header").show(ctx, |ui| {
         egui::Frame::default()
             .outer_margin(egui::vec2(0.0, 4.0))
@@ -208,7 +212,7 @@ fn ui_main(ctx: &egui::Context) {
 
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         if ui.button("Disconnect").clicked() {
-                            state.disconnect();
+                            state.disconnect(); // 切断処理をメソッド化
                         }
                     });
                 });
@@ -216,7 +220,6 @@ fn ui_main(ctx: &egui::Context) {
     });
 
     egui::CentralPanel::default().show(ctx, |ui| {
-        let state = APP_STATE.lock().unwrap();
         if state.connected {
             ui.vertical(|ui| {
                 ui.heading("セッション情報");
@@ -271,7 +274,11 @@ fn ui_main(ctx: &egui::Context) {
         ui.horizontal(|ui| {
             ui.label(format!(
                 "Status: {}",
-                if state.connected { "Connected" } else { "Not Connected" }
+                if state.connected {
+                    "Connected"
+                } else {
+                    "Not Connected"
+                }
             ));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 ui.label(&state.status_message);
