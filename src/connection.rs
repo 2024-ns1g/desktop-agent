@@ -4,11 +4,13 @@ use log::{debug, error, info};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 use tokio::sync::mpsc::UnboundedSender;
+use tokio::sync::oneshot;
 use tokio_tungstenite::tungstenite;
 use tokio_tungstenite::WebSocketStream;
 
+#[derive(Debug)]
 pub struct WsHandle {
-    shutdown_tx: tokio::sync::oneshot::Sender<()>,
+    shutdown_tx: oneshot::Sender<()>,
 }
 
 impl WsHandle {
@@ -80,7 +82,10 @@ enum Event {
     },
 }
 
-async fn handle_event(event: Event, sender: &std::sync::mpsc::Sender<crate::WsEvent>) {
+async fn handle_event(
+    event: Event,
+    sender: &std::sync::mpsc::Sender<crate::WsEvent>,
+) -> Result<(), anyhow::Error> {
     match event {
         Event::KeyPress { key } => {
             tokio::task::spawn_blocking({
@@ -94,80 +99,83 @@ async fn handle_event(event: Event, sender: &std::sync::mpsc::Sender<crate::WsEv
                     }
                 }
             });
-            sender.send(crate::WsEvent::KeyPressed(key)).unwrap();
+            sender.send(crate::WsEvent::KeyPressed(key))?;
         }
         Event::SlideChanged {
             slide_index,
             total_slides,
         } => {
-            sender
-                .send(crate::WsEvent::SlideChanged {
-                    index: slide_index,
-                    total: total_slides,
-                })
-                .unwrap();
+            sender.send(crate::WsEvent::SlideChanged {
+                index: slide_index,
+                total: total_slides,
+            })?;
         }
     }
+    Ok(())
 }
 
-// CHANGED: sender引数を追加
 pub async fn run_websocket(
     base_url: &str,
     session_id: &str,
     token: &str,
     agent_name: &str,
-    sender: std::sync::mpsc::Sender<crate::WsEvent>, // CHANGED
+    sender: std::sync::mpsc::Sender<crate::WsEvent>,
 ) -> Result<WsHandle, anyhow::Error> {
-    // 戻り値変更
     let ws_base_url = base_url.replace("http", "ws");
-
     let (mut ws_stream, _) =
         tokio_tungstenite::connect_async(format!("{}/agent?sessionId={}", ws_base_url, session_id))
             .await?;
 
-    sender.send(crate::WsEvent::ConnectionEstablished).unwrap(); // CHANGED: 接続通知
+    let (shutdown_tx, shutdown_rx) = oneshot::channel();
 
-    let register_message = serde_json::to_string(&RegisterAgentMessage {
-        msg_type: "REGIST_AGENT",
-        data: RegisterAgentMessageData {
-            agent_name,
-            agent_type: "SHOW_SLIDE_DESKTOP",
-            token,
-        },
-    })?;
+    // メインのWebSocket処理タスク
+    let mut stream = ws_stream.split();
+    let send_task = async {
+        let register_message = serde_json::to_string(&RegisterAgentMessage {
+            msg_type: "REGIST_AGENT",
+            data: RegisterAgentMessageData {
+                agent_name,
+                agent_type: "SHOW_SLIDE_DESKTOP",
+                token,
+            },
+        })?;
+        stream
+            .0
+            .send(tungstenite::Message::text(register_message))
+            .await?;
+        Ok::<_, anyhow::Error>(stream.0)
+    };
 
-    ws_stream
-        .send(tungstenite::Message::text(register_message))
-        .await?;
-
-    while let Some(msg) = ws_stream.next().await {
-        match msg {
-            Ok(msg) => {
-                let event: Event = serde_json::from_str(&msg.to_string())?;
-                handle_event(event, &sender).await;
-            }
-            Err(e) => return Err(e.into()),
+    let recv_task = async {
+        while let Some(msg) = stream.1.next().await {
+            let msg = msg?;
+            let event: Event = serde_json::from_str(&msg.to_string())?;
+            handle_event(event, &sender).await?;
         }
-    }
+        Ok::<_, anyhow::Error>(())
+    };
 
-    let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel();
-
-    // WebSocket監視タスク
     tokio::spawn(async move {
         tokio::select! {
-            _ = async {
-                while let Some(msg) = ws_stream.next().await {
-                    // ...（既存のメッセージ処理）
+            result = send_task => {
+                if let Err(e) = result {
+                    error!("送信タスクエラー: {}", e);
                 }
-            } => {},
+            }
+            result = recv_task => {
+                if let Err(e) = result {
+                    error!("受信タスクエラー: {}", e);
+                }
+            }
             _ = shutdown_rx => {
-                log::info!("WebSocket shutdown requested");
+                info!("切断要求を受信");
+                ws_stream.close(None).await.ok();
+                sender.send(crate::WsEvent::ConnectionClosed).ok();
             }
         }
-        ws_stream.close(None).await.ok();
     });
 
-    Ok(WsHandle { shutdown_tx }) // ハンドル返却
+    Ok(WsHandle { shutdown_tx })
 }
 
 #[derive(Serialize, Deserialize, Debug)]
