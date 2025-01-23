@@ -1,4 +1,4 @@
-use connection::{get_session_info, run_websocket, verify_otp};
+use connection::{get_session_info, run_websocket, verify_otp, WsHandle};
 use eframe::egui;
 use once_cell::sync::Lazy;
 use std::sync::Mutex;
@@ -86,7 +86,7 @@ impl AppState {
                 let mut state = APP_STATE.lock().unwrap();
                 state.connected = false;
                 state.status_message = match result {
-                    Ok(()) => "WebSocket connection closed.".to_owned(),
+                    Ok(_) => "WebSocket connection closed.".to_owned(),
                     Err(e) => format!("WebSocket error: {}", e),
                 };
             }
