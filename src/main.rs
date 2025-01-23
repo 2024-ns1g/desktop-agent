@@ -28,6 +28,8 @@ struct AppState {
     total_slide_count: usize,
     // CHANGED: イベント受信用チャネルを追加
     ws_event_receiver: Option<std::sync::mpsc::Receiver<WsEvent>>,
+    logs: Vec<String>,           // NEW: ログ用フィールド追加
+    ws_handle: Option<WsHandle>, // NEW: WebSocketハンドル追加
 }
 
 impl AppState {
@@ -64,7 +66,7 @@ impl AppState {
         let token = self.token.clone();
         let agent_name = self.agent_name.clone();
         let session_server_address = self.session_server_address.clone();
-        
+
         // CHANGED: チャネルを作成
         let (sender, receiver) = std::sync::mpsc::channel();
         self.ws_event_receiver = Some(receiver);
@@ -112,6 +114,16 @@ impl AppState {
                 }
             }
         });
+    }
+
+    pub fn disconnect(&mut self) {
+        if let Some(handle) = self.ws_handle.take() {
+            handle.shutdown(); // WebSocket切断実行
+        }
+        self.connected = false;
+        self.status_message = "Disconnected".to_owned();
+        self.logs.clear();
+        self.ws_event_receiver = None;
     }
 }
 
@@ -184,9 +196,7 @@ fn ui_main(ctx: &egui::Context) {
 
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         if ui.button("Disconnect").clicked() {
-                            state.connected = false;
-                            state.ws_event_receiver = None; // CHANGED: 受信機をリセット
-                            state.status_message = "Disconnected".to_owned();
+                            state.disconnect(); // 切断処理をメソッド化
                         }
                     });
                 });
@@ -195,12 +205,23 @@ fn ui_main(ctx: &egui::Context) {
 
     egui::CentralPanel::default().show(ctx, |ui| {
         if state.connected {
-            ui.vertical_centered(|ui| {
-                ui.heading("Connected");
-                ui.label(format!(
-                    "Slide: {}/{}",
-                    state.current_slide_index, state.total_slide_count
-                ));
+            egui::CentralPanel::default().show(ctx, |ui| {
+                ui.vertical(|ui| {
+                    ui.heading("Session Info");
+                    ui.label(format!(
+                        "Slide: {}/{}",
+                        state.current_slide_index, state.total_slide_count
+                    ));
+
+                    // NEW: ログ表示用スクロールエリア
+                    egui::ScrollArea::vertical()
+                        .auto_shrink([false, false])
+                        .show(ui, |ui| {
+                            for log in &state.logs {
+                                ui.label(log);
+                            }
+                        });
+                });
             });
         } else {
             ui.vertical_centered(|ui| {
@@ -239,7 +260,11 @@ fn ui_main(ctx: &egui::Context) {
         ui.horizontal(|ui| {
             ui.label(format!(
                 "Status: {}",
-                if state.connected { "Connected" } else { "Not Connected" }
+                if state.connected {
+                    "Connected"
+                } else {
+                    "Not Connected"
+                }
             ));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 ui.label(&state.status_message);

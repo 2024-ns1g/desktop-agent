@@ -3,7 +3,19 @@ use futures_util::{SinkExt, StreamExt};
 use log::{debug, error, info};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
+use tokio::sync::mpsc::UnboundedSender;
 use tokio_tungstenite::tungstenite;
+use tokio_tungstenite::WebSocketStream;
+
+pub struct WsHandle {
+    shutdown_tx: tokio::sync::oneshot::Sender<()>,
+}
+
+impl WsHandle {
+    pub fn shutdown(self) {
+        let _ = self.shutdown_tx.send(());
+    }
+}
 
 #[derive(Serialize, Debug)]
 pub struct VerifyOtpRequest {
@@ -105,14 +117,13 @@ pub async fn run_websocket(
     token: &str,
     agent_name: &str,
     sender: std::sync::mpsc::Sender<crate::WsEvent>, // CHANGED
-) -> Result<(), anyhow::Error> {
+) -> Result<WsHandle, anyhow::Error> {
+    // 戻り値変更
     let ws_base_url = base_url.replace("http", "ws");
 
-    let (mut ws_stream, _) = tokio_tungstenite::connect_async(format!(
-        "{}/agent?sessionId={}",
-        ws_base_url, session_id
-    ))
-    .await?;
+    let (mut ws_stream, _) =
+        tokio_tungstenite::connect_async(format!("{}/agent?sessionId={}", ws_base_url, session_id))
+            .await?;
 
     sender.send(crate::WsEvent::ConnectionEstablished).unwrap(); // CHANGED: 接続通知
 
@@ -139,7 +150,24 @@ pub async fn run_websocket(
         }
     }
 
-    Ok(())
+    let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel();
+
+    // WebSocket監視タスク
+    tokio::spawn(async move {
+        tokio::select! {
+            _ = async {
+                while let Some(msg) = ws_stream.next().await {
+                    // ...（既存のメッセージ処理）
+                }
+            } => {},
+            _ = shutdown_rx => {
+                log::info!("WebSocket shutdown requested");
+            }
+        }
+        ws_stream.close(None).await.ok();
+    });
+
+    Ok(WsHandle { shutdown_tx }) // ハンドル返却
 }
 
 #[derive(Serialize, Deserialize, Debug)]
