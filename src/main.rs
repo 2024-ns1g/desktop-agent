@@ -5,6 +5,14 @@ use std::sync::Mutex;
 
 mod connection;
 
+// CHANGED: WebSocketイベント用のenumを追加
+#[derive(Debug)]
+pub enum WsEvent {
+    SlideChanged { index: usize, total: usize },
+    KeyPressed(String),
+    ConnectionEstablished,
+}
+
 #[derive(Default)]
 struct AppState {
     primary_server_address: String,
@@ -18,6 +26,8 @@ struct AppState {
     slide_name: String,
     current_slide_index: usize,
     total_slide_count: usize,
+    // CHANGED: イベント受信用チャネルを追加
+    ws_event_receiver: Option<std::sync::mpsc::Receiver<WsEvent>>,
 }
 
 impl AppState {
@@ -37,12 +47,8 @@ impl AppState {
                         state.session_id = response.session_id;
                         state.token = response.token;
                         state.status_message = "OTP verified successfully.".to_owned();
-
-                        state.connected = true; // Workaround
                     }
-                    // Fetch session info
                     APP_STATE.lock().unwrap().fetch_session_info();
-                    // Establish WebSocket connection
                     APP_STATE.lock().unwrap().establish_ws_connection();
                 }
                 Err(e) => {
@@ -58,6 +64,10 @@ impl AppState {
         let token = self.token.clone();
         let agent_name = self.agent_name.clone();
         let session_server_address = self.session_server_address.clone();
+        
+        // CHANGED: チャネルを作成
+        let (sender, receiver) = std::sync::mpsc::channel();
+        self.ws_event_receiver = Some(receiver);
 
         std::thread::spawn(move || {
             let rt = tokio::runtime::Runtime::new().unwrap();
@@ -67,6 +77,7 @@ impl AppState {
                 &session_id,
                 &token,
                 &agent_name,
+                sender, // CHANGED: senderを渡す
             ));
 
             {
@@ -92,6 +103,8 @@ impl AppState {
                 Ok(response) => {
                     let mut state = APP_STATE.lock().unwrap();
                     state.slide_name = response.title;
+                    state.current_slide_index = response.state.current_page as usize;
+                    state.total_slide_count = response.pages.len();
                 }
                 Err(e) => {
                     let mut state = APP_STATE.lock().unwrap();
@@ -122,6 +135,40 @@ fn main() -> eframe::Result {
 fn ui_main(ctx: &egui::Context) {
     ctx.set_visuals(egui::Visuals::light());
 
+    // イベント処理用の一時リスト
+    let mut pending_events = Vec::new();
+
+    // イベント収集フェーズ（不変借用のみ）
+    {
+        let state = APP_STATE.lock().unwrap();
+        if let Some(receiver) = &state.ws_event_receiver {
+            while let Ok(event) = receiver.try_recv() {
+                pending_events.push(event);
+            }
+        }
+    }
+
+    // 状態更新フェーズ（可変借用）
+    {
+        let mut state = APP_STATE.lock().unwrap();
+        for event in pending_events {
+            match event {
+                WsEvent::SlideChanged { index, total } => {
+                    state.current_slide_index = index;
+                    state.total_slide_count = total;
+                    state.slide_name = format!("Slide {}", index + 1);
+                }
+                WsEvent::KeyPressed(key) => {
+                    state.status_message = format!("Key pressed: {}", key);
+                }
+                WsEvent::ConnectionEstablished => {
+                    state.connected = true;
+                    state.status_message = "WebSocket connected".to_owned();
+                }
+            }
+        }
+    }
+
     let mut state = APP_STATE.lock().unwrap();
 
     egui::TopBottomPanel::top("header").show(ctx, |ui| {
@@ -129,18 +176,16 @@ fn ui_main(ctx: &egui::Context) {
             .outer_margin(egui::vec2(0.0, 4.0))
             .show(ui, |ui| {
                 ui.horizontal(|ui| {
-                    // Left side
                     ui.with_layout(egui::Layout::left_to_right(egui::Align::Center), |ui| {
                         if state.connected {
                             ui.label(&state.slide_name);
                         }
                     });
 
-                    // Right side
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         if ui.button("Disconnect").clicked() {
-                            // Disconnect logic (example)
                             state.connected = false;
+                            state.ws_event_receiver = None; // CHANGED: 受信機をリセット
                             state.status_message = "Disconnected".to_owned();
                         }
                     });
@@ -194,11 +239,7 @@ fn ui_main(ctx: &egui::Context) {
         ui.horizontal(|ui| {
             ui.label(format!(
                 "Status: {}",
-                if state.connected {
-                    "Connected"
-                } else {
-                    "Not Connected"
-                }
+                if state.connected { "Connected" } else { "Not Connected" }
             ));
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 ui.label(&state.status_message);

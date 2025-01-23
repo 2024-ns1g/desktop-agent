@@ -52,39 +52,60 @@ struct RegisterAgentMessageData<'a> {
 struct RegisterAgentMessage<'a> {
     #[serde(rename = "requestType")]
     msg_type: &'a str,
-    // dataオブジェクトを追加
     data: RegisterAgentMessageData<'a>,
 }
 
+// CHANGED: イベント型を拡張
 #[derive(Deserialize)]
 #[serde(tag = "type")]
 enum Event {
     #[serde(rename = "KEY_PRESS")]
     KeyPress { key: String },
+    #[serde(rename = "SLIDE_CHANGED")]
+    SlideChanged {
+        slide_index: usize,
+        total_slides: usize,
+    },
 }
 
-async fn handle_event(event: Event) {
+async fn handle_event(event: Event, sender: &std::sync::mpsc::Sender<crate::WsEvent>) {
     match event {
         Event::KeyPress { key } => {
-            tokio::task::spawn_blocking(move || {
-                let mut enigo = enigo::Enigo::new(&Settings::default()).unwrap();
-                match key.as_str() {
-                    "ArrowRight" => enigo.key(Key::RightArrow, Click).unwrap(),
-                    "ArrowLeft" => enigo.key(Key::LeftArrow, Click).unwrap(),
-                    _ => {}
+            tokio::task::spawn_blocking({
+                let key = key.clone();
+                move || {
+                    let mut enigo = enigo::Enigo::new(&Settings::default()).unwrap();
+                    match key.as_str() {
+                        "ArrowRight" => enigo.key(Key::RightArrow, Click).unwrap(),
+                        "ArrowLeft" => enigo.key(Key::LeftArrow, Click).unwrap(),
+                        _ => {}
+                    }
                 }
             });
+            sender.send(crate::WsEvent::KeyPressed(key)).unwrap();
+        }
+        Event::SlideChanged {
+            slide_index,
+            total_slides,
+        } => {
+            sender
+                .send(crate::WsEvent::SlideChanged {
+                    index: slide_index,
+                    total: total_slides,
+                })
+                .unwrap();
         }
     }
 }
 
+// CHANGED: sender引数を追加
 pub async fn run_websocket(
     base_url: &str,
     session_id: &str,
     token: &str,
     agent_name: &str,
+    sender: std::sync::mpsc::Sender<crate::WsEvent>, // CHANGED
 ) -> Result<(), anyhow::Error> {
-    // http/httpsをws/wssにしたbase_urlを作成
     let ws_base_url = base_url.replace("http", "ws");
 
     let (mut ws_stream, _) = tokio_tungstenite::connect_async(format!(
@@ -92,6 +113,8 @@ pub async fn run_websocket(
         ws_base_url, session_id
     ))
     .await?;
+
+    sender.send(crate::WsEvent::ConnectionEstablished).unwrap(); // CHANGED: 接続通知
 
     let register_message = serde_json::to_string(&RegisterAgentMessage {
         msg_type: "REGIST_AGENT",
@@ -110,7 +133,7 @@ pub async fn run_websocket(
         match msg {
             Ok(msg) => {
                 let event: Event = serde_json::from_str(&msg.to_string())?;
-                handle_event(event).await;
+                handle_event(event, &sender).await;
             }
             Err(e) => return Err(e.into()),
         }
