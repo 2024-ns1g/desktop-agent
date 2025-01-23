@@ -3,9 +3,7 @@ use futures_util::{SinkExt, StreamExt};
 use log::{debug, error, info};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use tokio::sync::mpsc::UnboundedSender;
 use tokio_tungstenite::tungstenite;
-use tokio_tungstenite::WebSocketStream;
 
 pub struct WsHandle {
     shutdown_tx: tokio::sync::oneshot::Sender<()>,
