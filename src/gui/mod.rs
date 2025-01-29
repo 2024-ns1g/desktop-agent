@@ -70,7 +70,6 @@ pub fn ui_main(ctx: &egui::Context) {
                         state.current_slide_index, state.total_slide_count
                     ));
 
-                    // NEW: ログ表示用スクロールエリア
                     egui::ScrollArea::vertical()
                         .auto_shrink([false, false])
                         .show(ui, |ui| {
