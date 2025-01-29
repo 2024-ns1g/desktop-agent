@@ -55,7 +55,7 @@ pub async fn run_websocket(
 
     let (shutdown_tx, shutdown_rx) = tokio::sync::oneshot::channel();
 
-    // WebSocket監視タスク
+    // Task to handle incoming messages
     tokio::spawn(async move {
         tokio::select! {
             _ = async {
@@ -79,7 +79,7 @@ pub async fn run_websocket(
         ws_stream.close(None).await.ok();
     });
 
-    Ok(WsHandle { shutdown_tx }) // ハンドル返却
+    Ok(WsHandle { shutdown_tx })
 }
 
 async fn handle_event(
