@@ -20,18 +20,15 @@ pub async fn run_websocket(
     session_id: &str,
     token: &str,
     agent_name: &str,
-    sender: std::sync::mpsc::Sender<crate::models::events::WsEvent>, // CHANGED
+    sender: std::sync::mpsc::Sender<crate::models::events::WsEvent>,
 ) -> Result<WsHandle, anyhow::Error> {
-    // 戻り値変更
     let ws_base_url = base_url.replace("http", "ws");
-
     let (mut ws_stream, _) =
         tokio_tungstenite::connect_async(format!("{}/agent?sessionId={}", ws_base_url, session_id))
             .await?;
-
     sender
         .send(crate::models::events::WsEvent::ConnectionEstablished)
-        .unwrap(); // CHANGED: 接続通知
+        .unwrap();
 
     let register_message = serde_json::to_string(&RegisterAgentMessage {
         msg_type: "REGIST_AGENT",

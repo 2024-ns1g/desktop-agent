@@ -6,10 +6,8 @@ pub mod state;
 pub fn ui_main(ctx: &egui::Context) {
     ctx.set_visuals(egui::Visuals::light());
 
-    // イベント処理用の一時リスト
     let mut pending_events = Vec::new();
 
-    // イベント収集フェーズ（不変借用のみ）
     {
         let state = APP_STATE.lock().unwrap();
         if let Some(receiver) = &state.ws_event_receiver {
@@ -19,7 +17,7 @@ pub fn ui_main(ctx: &egui::Context) {
         }
     }
 
-    // 状態更新フェーズ（可変借用）
+    // Update state with pending events
     {
         let mut state = APP_STATE.lock().unwrap();
         for event in pending_events {
@@ -55,7 +53,7 @@ pub fn ui_main(ctx: &egui::Context) {
 
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         if ui.button("Disconnect").clicked() {
-                            state.disconnect(); // 切断処理をメソッド化
+                            state.disconnect();
                         }
                     });
                 });
