@@ -2,7 +2,6 @@ use crate::models::websocket::{Event, RegisterAgentMessage, RegisterAgentMessage
 use anyhow::Result;
 use enigo::{Direction::Click, Key, Keyboard, Settings};
 use futures_util::{SinkExt, StreamExt};
-// use log::{debug, error, info};
 use tokio_tungstenite::tungstenite;
 
 pub struct WsHandle {
