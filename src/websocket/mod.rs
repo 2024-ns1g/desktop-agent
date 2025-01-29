@@ -2,6 +2,7 @@ use crate::models::websocket::{Event, RegisterAgentMessage, RegisterAgentMessage
 use anyhow::Result;
 use enigo::{Direction::Click, Key, Keyboard, Settings};
 use futures_util::{SinkExt, StreamExt};
+use log::{error, warn};
 use tokio_tungstenite::tungstenite;
 
 pub struct WsHandle {
@@ -28,7 +29,9 @@ pub async fn run_websocket(
         tokio_tungstenite::connect_async(format!("{}/agent?sessionId={}", ws_base_url, session_id))
             .await?;
 
-    sender.send(crate::models::events::WsEvent::ConnectionEstablished).unwrap(); // CHANGED: 接続通知
+    sender
+        .send(crate::models::events::WsEvent::ConnectionEstablished)
+        .unwrap(); // CHANGED: 接続通知
 
     let register_message = serde_json::to_string(&RegisterAgentMessage {
         msg_type: "REGIST_AGENT",
@@ -60,7 +63,16 @@ pub async fn run_websocket(
         tokio::select! {
             _ = async {
                 while let Some(msg) = ws_stream.next().await {
-                    // ...（既存のメッセージ処理）
+                    if let Ok(msg) = msg {
+                        if let Ok(event) = serde_json::from_str::<Event>(&msg.to_string()) {
+                            handle_event(event, &sender).await;
+                        } else {
+                            warn!("Received invalid message: {:?}", msg);
+                        }
+                    } else {
+                        error!("Failed to receive message: {:?}", msg);
+                        break;
+                    }
                 }
             } => {},
             _ = shutdown_rx => {
@@ -73,7 +85,10 @@ pub async fn run_websocket(
     Ok(WsHandle { shutdown_tx }) // ハンドル返却
 }
 
-async fn handle_event(event: Event, sender: &std::sync::mpsc::Sender<crate::models::events::WsEvent>) {
+async fn handle_event(
+    event: Event,
+    sender: &std::sync::mpsc::Sender<crate::models::events::WsEvent>,
+) {
     match event {
         Event::KeyPress { key } => {
             tokio::task::spawn_blocking({
@@ -87,7 +102,9 @@ async fn handle_event(event: Event, sender: &std::sync::mpsc::Sender<crate::mode
                     }
                 }
             });
-            sender.send(crate::models::events::WsEvent::KeyPressed(key)).unwrap();
+            sender
+                .send(crate::models::events::WsEvent::KeyPressed(key))
+                .unwrap();
         }
         Event::SlideChanged {
             slide_index,
