@@ -38,6 +38,7 @@ impl AppState {
                         let mut state = APP_STATE.lock().unwrap();
                         state.session_id = response.session_id;
                         state.token = response.token;
+                        state.session_server_address = response.aggregator_url;
                         state.status_message = "OTP verified successfully.".to_owned();
                     }
                     APP_STATE.lock().unwrap().fetch_session_info();
