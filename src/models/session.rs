@@ -11,6 +11,7 @@ pub struct SessionInfoPage {
     pub page_id: String,
     pub title: String,
     pub scripts: Vec<SessionInfoPageScript>,
+    pub step: String,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
