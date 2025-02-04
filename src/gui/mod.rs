@@ -91,10 +91,6 @@ pub fn ui_main(ctx: &egui::Context) {
                         ui.text_edit_singleline(&mut state.primary_server_address);
                         ui.end_row();
 
-                        ui.label("Session Server:");
-                        ui.text_edit_singleline(&mut state.session_server_address);
-                        ui.end_row();
-
                         ui.label("OTP:");
                         ui.text_edit_singleline(&mut state.otp);
                         ui.end_row();
