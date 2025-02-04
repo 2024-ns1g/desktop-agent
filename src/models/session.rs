@@ -40,15 +40,15 @@ pub struct SessionInfoVote {
     #[serde(rename = "voterId")]
     pub voter_id: String,
 }
-
-#[derive(Serialize, Deserialize, Debug)]
-pub struct SessionInfoState {
-    #[serde(rename = "currentPage")]
-    pub current_page: i8,
-    #[serde(rename = "currentVoteId")]
-    pub available_vote_id: Option<String>,
-    pub votes: Vec<SessionInfoVote>,
-}
+//
+// #[derive(Serialize, Deserialize, Debug)]
+// pub struct SessionInfoState {
+//     #[serde(rename = "currentPage")]
+//     pub current_page: i8,
+//     #[serde(rename = "currentVoteId")]
+//     pub available_vote_id: Option<String>,
+//     pub votes: Vec<SessionInfoVote>,
+// }
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SessionInfo {
@@ -60,5 +60,4 @@ pub struct SessionInfo {
     pub pages: Vec<SessionInfoPage>,
     #[serde(rename = "availableVotes")]
     pub available_votes: Vec<SessionInfoAvailableVote>,
-    pub state: SessionInfoState,
 }
