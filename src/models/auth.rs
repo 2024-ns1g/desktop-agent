@@ -9,7 +9,7 @@ pub struct VerifyOtpRequest {
 pub struct VerifyOtpResponse {
     #[serde(rename = "sessionId")]
     pub session_id: String,
-    #[serde(rename = "aggregateUrl")]
+    #[serde(rename = "aggregatorUrl")]
     pub aggregator_url: String,
     pub token: String,
 }
