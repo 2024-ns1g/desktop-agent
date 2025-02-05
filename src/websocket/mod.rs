@@ -87,32 +87,41 @@ async fn handle_event(
     sender: &std::sync::mpsc::Sender<crate::models::events::WsEvent>,
 ) {
     match event {
-        Event::KeyPress { key } => {
-            tokio::task::spawn_blocking({
-                let key = key.clone();
-                move || {
-                    let mut enigo = enigo::Enigo::new(&Settings::default()).unwrap();
-                    match key.as_str() {
-                        "ArrowRight" => enigo.key(Key::RightArrow, Click).unwrap(),
-                        "ArrowLeft" => enigo.key(Key::LeftArrow, Click).unwrap(),
-                        _ => {}
-                    }
-                }
-            });
+        // Event::KeyPress { key } => {
+        //     tokio::task::spawn_blocking({
+        //         let key = key.clone();
+        //         move || {
+        //             let mut enigo = enigo::Enigo::new(&Settings::default()).unwrap();
+        //             match key.as_str() {
+        //                 "ArrowRight" => enigo.key(Key::RightArrow, Click).unwrap(),
+        //                 "ArrowLeft" => enigo.key(Key::LeftArrow, Click).unwrap(),
+        //                 _ => {}
+        //             }
+        //         }
+        //     });
+        //     sender
+        //         .send(crate::models::events::WsEvent::KeyPressed(key))
+        //         .unwrap();
+        // }
+        // Event::SlideChanged {
+        //     slide_index,
+        //     total_slides,
+        // } => {
+        //     sender
+        //         .send(crate::models::events::WsEvent::SlideChanged {
+        //             index: slide_index,
+        //             total: total_slides,
+        //         })
+        //         .unwrap();
+        // }
+
+        Event::ChangeCurrentPage { data } => {
             sender
-                .send(crate::models::events::WsEvent::KeyPressed(key))
-                .unwrap();
-        }
-        Event::SlideChanged {
-            slide_index,
-            total_slides,
-        } => {
-            sender
-                .send(crate::models::events::WsEvent::SlideChanged {
-                    index: slide_index,
-                    total: total_slides,
-                })
-                .unwrap();
+            .send(crate::models::events::WsEvent::SlideChanged {
+                index: data.page_index as usize,
+                total: data.total_pages as usize,
+            })
+            .unwrap();
         }
     }
 }

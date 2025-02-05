@@ -16,14 +16,29 @@ pub struct RegisterAgentMessage<'a> {
     pub data: RegisterAgentMessageData<'a>,
 }
 
+// #[derive(Deserialize)]
+// #[serde(tag = "type")]
+// pub enum Event {
+//     #[serde(rename = "KEY_PRESS")]
+//     KeyPress { key: String },
+//     #[serde(rename = "SLIDE_CHANGED")]
+//     SlideChanged {
+//         slide_index: usize,
+//         total_slides: usize,
+//     },
+// }
+
 #[derive(Deserialize)]
-#[serde(tag = "type")]
+pub struct ChangeCurrentPageData {
+    #[serde(rename = "newPageIndex")]
+    pub new_page_index: usize,
+}
+
+#[derive(Deserialize)]
+#[serde(tag = "requestType")]
 pub enum Event {
-    #[serde(rename = "KEY_PRESS")]
-    KeyPress { key: String },
-    #[serde(rename = "SLIDE_CHANGED")]
-    SlideChanged {
-        slide_index: usize,
-        total_slides: usize,
+    #[serde(rename = "CHANGE_CURRENT_PAGE")]
+    ChangeCurrentPage {
+        data: ChangeCurrentPageData,
     },
 }
