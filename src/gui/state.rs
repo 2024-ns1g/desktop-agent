@@ -1,3 +1,8 @@
+use std::sync::Arc;
+
+use once_cell::sync::Lazy;
+use tokio::runtime::Runtime;
+
 use crate::api::auth::verify_otp;
 use crate::api::session::get_session_info;
 use crate::api::state::get_session_state;
@@ -57,7 +62,13 @@ impl AppState {
         });
     }
 
+    // Workaround
+    // 全体のStateに統合したい, そもそもなんで動いてるのかよくわかってない
     pub fn establish_ws_connection(&mut self) {
+        if self.ws_handle.is_some() {
+            return; // すでに接続済みなら何もしない
+        }
+
         let session_id = self.session_id.clone();
         let token = self.token.clone();
         let agent_name = self.agent_name.clone();
@@ -67,8 +78,9 @@ impl AppState {
         self.ws_event_receiver = Some(receiver);
 
         std::thread::spawn(move || {
-            let rt = tokio::runtime::Runtime::new().unwrap();
+            static RUNTIME: Lazy<Arc<Runtime>> = Lazy::new(|| Arc::new(Runtime::new().unwrap()));
 
+            let rt = RUNTIME.clone();
             let result = rt.block_on(run_websocket(
                 &session_server_address,
                 &session_id,
@@ -77,18 +89,16 @@ impl AppState {
                 sender,
             ));
 
-            {
-                let mut state = APP_STATE.lock().unwrap();
-                match result {
-                    Ok(ws_handle) => {
-                        state.ws_handle = Some(ws_handle);
-                        state.connected = true;
-                        state.status_message = "WebSocket connection established.".to_owned();
-                    }
-                    Err(e) => {
-                        state.connected = false;
-                        state.status_message = format!("WebSocket error: {}", e);
-                    }
+            let mut state = APP_STATE.lock().unwrap();
+            match result {
+                Ok(ws_handle) => {
+                    state.ws_handle = Some(ws_handle);
+                    state.connected = true;
+                    state.status_message = "WebSocket connection established.".to_owned();
+                }
+                Err(e) => {
+                    state.connected = false;
+                    state.status_message = format!("WebSocket error: {}", e);
                 }
             }
         });
