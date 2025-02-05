@@ -93,5 +93,33 @@ async fn handle_event(
                 })
                 .unwrap();
         }
+        WsEvent::TriggerNextStep { data } => {
+            tokio::task::spawn_blocking({
+                move || {
+                    let mut enigo = enigo::Enigo::new(&Settings::default()).unwrap();
+                    enigo.key(Key::RightArrow, Click).unwrap();
+                }
+            });
+            sender
+                .send(crate::models::events::Event::StepChanged {
+                    new_page_index: data.new_page_index,
+                    new_step_index: data.new_step_index,
+                })
+                .unwrap();
+        }
+        WsEvent::TriggerPrevStep { data } => {
+            tokio::task::spawn_blocking({
+                move || {
+                    let mut enigo = enigo::Enigo::new(&Settings::default()).unwrap();
+                    enigo.key(Key::LeftArrow, Click).unwrap();
+                }
+            });
+            sender
+                .send(crate::models::events::Event::StepChanged {
+                    new_page_index: data.new_page_index,
+                    new_step_index: data.new_step_index,
+                })
+                .unwrap();
+        }
     }
 }
