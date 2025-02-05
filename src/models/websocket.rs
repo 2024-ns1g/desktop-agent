@@ -36,7 +36,7 @@ pub struct ChangeCurrentPageData {
 
 #[derive(Deserialize)]
 #[serde(tag = "requestType")]
-pub enum Event {
+pub enum WsEvent {
     #[serde(rename = "CHANGE_CURRENT_PAGE")]
     ChangeCurrentPage {
         data: ChangeCurrentPageData,

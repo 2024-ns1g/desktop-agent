@@ -114,14 +114,7 @@ async fn handle_event(
         //         })
         //         .unwrap();
         // }
-
         Event::ChangeCurrentPage { data } => {
-            sender
-            .send(crate::models::events::WsEvent::SlideChanged {
-                index: data.page_index as usize,
-                total: data.total_pages as usize,
-            })
-            .unwrap();
         }
     }
 }
