@@ -1,4 +1,4 @@
-use crate::models::websocket::{WsEvent, RegisterAgentMessage, RegisterAgentMessageData};
+use crate::models::websocket::{RegisterAgentMessage, RegisterAgentMessageData, WsEvent};
 use anyhow::Result;
 use enigo::{Direction::Click, Key, Keyboard, Settings};
 use futures_util::{SinkExt, StreamExt};
@@ -115,6 +115,23 @@ async fn handle_event(
         //         .unwrap();
         // }
         WsEvent::ChangeCurrentPage { data } => {
+            tokio::task::spawn_blocking({
+                move || {
+                    let mut enigo = enigo::Enigo::new(&Settings::default()).unwrap();
+
+                    let new_page_chars: Vec<char> = data.new_page_index.to_string().chars().collect();
+
+                    for c in new_page_chars {
+                        enigo.key(Key::Unicode(c), Click).unwrap();
+                    }
+
+                    enigo.key(Key::Return, Click).unwrap();
+                }
+            });
+
+            sender.send(crate::models::events::Event::SlideChanged {
+                new_page_index: data.new_page_index,
+            }).unwrap();
         }
     }
 }
