@@ -29,6 +29,13 @@ pub fn ui_main(ctx: &egui::Context) {
                 Event::SlideChanged { new_page_index } => {
                     state.current_slide_index = new_page_index;
                 }
+                Event::StepChanged {
+                    new_page_index,
+                    new_step_index,
+                } => {
+                    state.current_slide_index = new_page_index;
+                    state.current_step = new_step_index;
+                }
             }
         }
     }
