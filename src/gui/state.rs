@@ -2,6 +2,7 @@ use crate::api::auth::verify_otp;
 use crate::api::session::get_session_info;
 use crate::api::state::get_session_state;
 use crate::models::events::WsEvent;
+use crate::models::session::SessionInfoPage;
 use crate::websocket::{run_websocket, WsHandle};
 use crate::APP_STATE;
 
@@ -18,6 +19,9 @@ pub struct AppState {
     pub slide_name: String,
     pub current_slide_index: usize,
     pub total_slide_count: usize,
+    pub current_slide_total_step: usize,
+    pub current_step: usize,
+    pub pages: Vec<SessionInfoPage>,
     pub ws_event_receiver: Option<std::sync::mpsc::Receiver<WsEvent>>,
     pub logs: Vec<String>,
     pub ws_handle: Option<WsHandle>,
@@ -102,6 +106,7 @@ impl AppState {
                     // Workdaround
                     state.current_slide_index = 0;
                     state.total_slide_count = response.pages.len();
+                    state.pages = response.pages;
                 }
                 Err(e) => {
                     let mut state = APP_STATE.lock().unwrap();
@@ -123,6 +128,7 @@ impl AppState {
                 Ok(response) => {
                     let mut state = APP_STATE.lock().unwrap();
                     state.current_slide_index = response.current_page as usize;
+                    // state.current_slide_total_step = state.pages[state.current_slide_index].step.
                 }
                 Err(e) => {
                     let mut state = APP_STATE.lock().unwrap();
