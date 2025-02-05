@@ -19,7 +19,6 @@ pub struct AppState {
     pub slide_name: String,
     pub current_slide_index: usize,
     pub total_slide_count: usize,
-    pub current_slide_total_step: usize,
     pub current_step: usize,
     pub pages: Vec<SessionInfoPage>,
     pub ws_event_receiver: Option<std::sync::mpsc::Receiver<WsEvent>>,
@@ -128,7 +127,7 @@ impl AppState {
                 Ok(response) => {
                     let mut state = APP_STATE.lock().unwrap();
                     state.current_slide_index = response.current_page as usize;
-                    state.current_slide_total_step = state.pages[state.current_slide_index].step;
+                    state.current_step = response.current_step as usize;
                 }
                 Err(e) => {
                     let mut state = APP_STATE.lock().unwrap();
