@@ -1,4 +1,13 @@
+use std::collections::HashMap;
+
 use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct VoteSummary {
+    #[serde(rename = "voteId")]
+    pub vote_id: String,
+    pub choice_votes: HashMap<String, i32>,
+}
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SessionState {
@@ -9,6 +18,7 @@ pub struct SessionState {
     #[serde(rename = "activeVoteIds")]
     pub active_vote_ids: Vec<String>,
     pub votes: Vec<Vote>,
+    pub vote_summaries: Vec<VoteSummary>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
