@@ -1,4 +1,4 @@
-use crate::{models::events::WsEvent, APP_STATE};
+use crate::{models::events::Event, APP_STATE};
 use eframe::egui;
 
 pub mod state;
@@ -22,15 +22,7 @@ pub fn ui_main(ctx: &egui::Context) {
         let mut state = APP_STATE.lock().unwrap();
         for event in pending_events {
             match event {
-                WsEvent::SlideChanged { index, total } => {
-                    state.current_slide_index = index;
-                    state.total_slide_count = total;
-                    state.slide_name = format!("Slide {}", index + 1);
-                }
-                WsEvent::KeyPressed(key) => {
-                    state.status_message = format!("Key pressed: {}", key);
-                }
-                WsEvent::ConnectionEstablished => {
+                Event::ConnectionEstablished => {
                     state.connected = true;
                     state.status_message = "WebSocket connected".to_owned();
                 }
