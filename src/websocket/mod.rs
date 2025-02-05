@@ -87,33 +87,6 @@ async fn handle_event(
     sender: &std::sync::mpsc::Sender<crate::models::events::Event>,
 ) {
     match event {
-        // Event::KeyPress { key } => {
-        //     tokio::task::spawn_blocking({
-        //         let key = key.clone();
-        //         move || {
-        //             let mut enigo = enigo::Enigo::new(&Settings::default()).unwrap();
-        //             match key.as_str() {
-        //                 "ArrowRight" => enigo.key(Key::RightArrow, Click).unwrap(),
-        //                 "ArrowLeft" => enigo.key(Key::LeftArrow, Click).unwrap(),
-        //                 _ => {}
-        //             }
-        //         }
-        //     });
-        //     sender
-        //         .send(crate::models::events::WsEvent::KeyPressed(key))
-        //         .unwrap();
-        // }
-        // Event::SlideChanged {
-        //     slide_index,
-        //     total_slides,
-        // } => {
-        //     sender
-        //         .send(crate::models::events::WsEvent::SlideChanged {
-        //             index: slide_index,
-        //             total: total_slides,
-        //         })
-        //         .unwrap();
-        // }
         WsEvent::ChangeCurrentPage { data } => {
             tokio::task::spawn_blocking({
                 move || {
