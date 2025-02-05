@@ -63,7 +63,6 @@ impl AppState {
         let agent_name = self.agent_name.clone();
         let session_server_address = self.session_server_address.clone();
 
-        // CHANGED: チャネルを作成
         let (sender, receiver) = std::sync::mpsc::channel();
         self.ws_event_receiver = Some(receiver);
 
@@ -75,16 +74,22 @@ impl AppState {
                 &session_id,
                 &token,
                 &agent_name,
-                sender, // CHANGED: senderを渡す
+                sender,
             ));
 
             {
                 let mut state = APP_STATE.lock().unwrap();
-                state.connected = false;
-                state.status_message = match result {
-                    Ok(_) => "WebSocket connection closed.".to_owned(),
-                    Err(e) => format!("WebSocket error: {}", e),
-                };
+                match result {
+                    Ok(ws_handle) => {
+                        state.ws_handle = Some(ws_handle);
+                        state.connected = true;
+                        state.status_message = "WebSocket connection established.".to_owned();
+                    }
+                    Err(e) => {
+                        state.connected = false;
+                        state.status_message = format!("WebSocket error: {}", e);
+                    }
+                }
             }
         });
     }
