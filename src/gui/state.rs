@@ -101,9 +101,6 @@ impl AppState {
                 Ok(response) => {
                     let mut state = APP_STATE.lock().unwrap();
                     state.slide_name = response.title;
-                    // state.current_slide_index = response.state.current_page as usize;
-                    // Workdaround
-                    state.current_slide_index = 0;
                     state.total_slide_count = response.pages.len();
                     state.pages = response.pages;
                 }
