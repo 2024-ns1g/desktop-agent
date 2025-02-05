@@ -1,9 +1,31 @@
 use crate::{models::events::Event, APP_STATE};
-use eframe::egui;
+use eframe::egui::FontData;
+use egui::FontFamily;
 
 pub mod state;
 
 pub fn ui_main(ctx: &egui::Context) {
+    let mut fonts = egui::FontDefinitions::default();
+
+    fonts.font_data.insert(
+        "Nyashi".to_owned(),
+        FontData::from_static(include_bytes!("../assets/fonts/Nyashi.ttf")).into(),
+    );
+
+    fonts
+        .families
+        .get_mut(&FontFamily::Proportional)
+        .unwrap()
+        .insert(0, "Nyashi".to_owned());
+
+    fonts
+        .families
+        .get_mut(&FontFamily::Monospace)
+        .unwrap()
+        .insert(0, "Nyashi".to_owned());
+
+    ctx.set_fonts(fonts);
+
     ctx.set_visuals(egui::Visuals::light());
 
     let mut pending_events = Vec::new();
@@ -28,6 +50,8 @@ pub fn ui_main(ctx: &egui::Context) {
                 }
                 Event::SlideChanged { new_page_index } => {
                     state.current_slide_index = new_page_index;
+                    // Add log
+                    state.logs.push(format!("ページを{}に変更しました", new_page_index));
                 }
                 Event::StepChanged {
                     new_page_index,
