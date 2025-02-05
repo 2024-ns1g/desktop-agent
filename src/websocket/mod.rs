@@ -1,4 +1,4 @@
-use crate::models::websocket::{Event, RegisterAgentMessage, RegisterAgentMessageData};
+use crate::models::websocket::{WsEvent, RegisterAgentMessage, RegisterAgentMessageData};
 use anyhow::Result;
 use enigo::{Direction::Click, Key, Keyboard, Settings};
 use futures_util::{SinkExt, StreamExt};
@@ -20,14 +20,14 @@ pub async fn run_websocket(
     session_id: &str,
     token: &str,
     agent_name: &str,
-    sender: std::sync::mpsc::Sender<crate::models::events::WsEvent>,
+    sender: std::sync::mpsc::Sender<crate::models::events::Event>,
 ) -> Result<WsHandle, anyhow::Error> {
     let ws_base_url = base_url.replace("http", "ws");
     let (mut ws_stream, _) =
         tokio_tungstenite::connect_async(format!("{}/agent?sessionId={}", ws_base_url, session_id))
             .await?;
     sender
-        .send(crate::models::events::WsEvent::ConnectionEstablished)
+        .send(crate::models::events::Event::ConnectionEstablished)
         .unwrap();
 
     let register_message = serde_json::to_string(&RegisterAgentMessage {
@@ -46,7 +46,7 @@ pub async fn run_websocket(
     while let Some(msg) = ws_stream.next().await {
         match msg {
             Ok(msg) => {
-                let event: Event = serde_json::from_str(&msg.to_string())?;
+                let event: WsEvent = serde_json::from_str(&msg.to_string())?;
                 handle_event(event, &sender).await;
             }
             Err(e) => return Err(e.into()),
@@ -61,7 +61,7 @@ pub async fn run_websocket(
             _ = async {
                 while let Some(msg) = ws_stream.next().await {
                     if let Ok(msg) = msg {
-                        if let Ok(event) = serde_json::from_str::<Event>(&msg.to_string()) {
+                        if let Ok(event) = serde_json::from_str::<WsEvent>(&msg.to_string()) {
                             handle_event(event, &sender).await;
                         } else {
                             warn!("Received invalid message: {:?}", msg);
@@ -83,8 +83,8 @@ pub async fn run_websocket(
 }
 
 async fn handle_event(
-    event: Event,
-    sender: &std::sync::mpsc::Sender<crate::models::events::WsEvent>,
+    event: WsEvent,
+    sender: &std::sync::mpsc::Sender<crate::models::events::Event>,
 ) {
     match event {
         // Event::KeyPress { key } => {
@@ -114,7 +114,7 @@ async fn handle_event(
         //         })
         //         .unwrap();
         // }
-        Event::ChangeCurrentPage { data } => {
+        WsEvent::ChangeCurrentPage { data } => {
         }
     }
 }
