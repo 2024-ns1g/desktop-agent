@@ -128,7 +128,7 @@ impl AppState {
                 Ok(response) => {
                     let mut state = APP_STATE.lock().unwrap();
                     state.current_slide_index = response.current_page as usize;
-                    // state.current_slide_total_step = state.pages[state.current_slide_index].step.
+                    state.current_slide_total_step = state.pages[state.current_slide_index].step;
                 }
                 Err(e) => {
                     let mut state = APP_STATE.lock().unwrap();
