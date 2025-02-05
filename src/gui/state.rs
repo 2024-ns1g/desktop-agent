@@ -1,7 +1,7 @@
 use crate::api::auth::verify_otp;
 use crate::api::session::get_session_info;
 use crate::api::state::get_session_state;
-use crate::models::events::WsEvent;
+use crate::models::events::Event;
 use crate::models::session::SessionInfoPage;
 use crate::websocket::{run_websocket, WsHandle};
 use crate::APP_STATE;
@@ -21,7 +21,7 @@ pub struct AppState {
     pub total_slide_count: usize,
     pub current_step: usize,
     pub pages: Vec<SessionInfoPage>,
-    pub ws_event_receiver: Option<std::sync::mpsc::Receiver<WsEvent>>,
+    pub ws_event_receiver: Option<std::sync::mpsc::Receiver<Event>>,
     pub logs: Vec<String>,
     pub ws_handle: Option<WsHandle>,
 }
