@@ -26,6 +26,9 @@ pub fn ui_main(ctx: &egui::Context) {
                     state.connected = true;
                     state.status_message = "WebSocket connected".to_owned();
                 }
+                Event::SlideChanged { new_page_index } => {
+                    state.current_slide_index = new_page_index;
+                }
             }
         }
     }
