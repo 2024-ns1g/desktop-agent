@@ -1,5 +1,6 @@
 use crate::api::auth::verify_otp;
 use crate::api::session::get_session_info;
+use crate::api::state::get_session_state;
 use crate::models::events::WsEvent;
 use crate::websocket::{run_websocket, WsHandle};
 use crate::APP_STATE;
@@ -104,6 +105,27 @@ impl AppState {
                 Err(e) => {
                     let mut state = APP_STATE.lock().unwrap();
                     state.status_message = format!("Failed to fetch session info: {}", e);
+                }
+            }
+        });
+    }
+
+    pub fn fetch_session_state(&mut self) {
+        let client = reqwest::Client::new();
+        let base_url = self.session_server_address.clone();
+        let session_id = self.session_id.clone();
+        let token = self.token.clone();
+        std::thread::spawn(move || {
+            let rt = tokio::runtime::Runtime::new().unwrap();
+            let result = rt.block_on(get_session_state(&client, &base_url, &session_id, &token));
+            match result {
+                Ok(response) => {
+                    let mut state = APP_STATE.lock().unwrap();
+                    state.current_slide_index = response.current_page as usize;
+                }
+                Err(e) => {
+                    let mut state = APP_STATE.lock().unwrap();
+                    state.status_message = format!("Failed to fetch session state: {}", e);
                 }
             }
         });
